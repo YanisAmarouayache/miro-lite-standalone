@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MiroBoardFacade } from '../application/miro-board.facade';
 import { WidgetModel } from '../domain/board.model';
@@ -32,6 +32,7 @@ interface InteractionState {
   styleUrl: './miro-board.component.css'
 })
 export class MiroBoardComponent implements OnChanges, OnDestroy {
+  @ViewChild('canvasRef') private canvasRef?: ElementRef<HTMLDivElement>;
   @Input({ required: true }) boardId!: string;
   private readonly facade = inject(MiroBoardFacade);
   readonly board$ = this.facade.board$;
@@ -40,6 +41,14 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   private readonly frameOverrides = new Map<string, WidgetFrame>();
   private interaction?: InteractionState;
   private selectedWidgetId: string | null = null;
+  zoom = 1;
+  zoomIndicatorVisible = false;
+  zoomIndicatorX = 0;
+  zoomIndicatorY = 0;
+  private zoomIndicatorTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly minZoom = 0.2;
+  private readonly maxZoom = 3;
+  private readonly zoomStep = 0.1;
   private readonly minWidth = 120;
   private readonly minHeight = 80;
 
@@ -55,6 +64,30 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   addWidget(type: string): void {
     this.facade.addWidget(type);
+  }
+
+  zoomIn(): void {
+    this.setZoomAtPoint(this.zoom + this.zoomStep);
+  }
+
+  zoomOut(): void {
+    this.setZoomAtPoint(this.zoom - this.zoomStep);
+  }
+
+  resetZoom(): void {
+    this.setZoomAtPoint(1);
+  }
+
+  zoomPercent(): number {
+    return Math.round(this.zoom * 100);
+  }
+
+  onCanvasWheel(event: WheelEvent): void {
+    if (!event.ctrlKey && !event.metaKey) return;
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? this.zoomStep : -this.zoomStep;
+    this.setZoomAtPoint(this.zoom + delta, event.clientX, event.clientY);
+    this.showZoomIndicator(event.clientX, event.clientY);
   }
 
   updateText(id: string, text: string): void {
@@ -167,6 +200,22 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     return this.frameOverrides.get(widget.id) ?? widget;
   }
 
+  surfaceWidth(board: { widgets: WidgetModel[] }): number {
+    const maxX = board.widgets.reduce((acc, widget) => {
+      const frame = this.frame(widget);
+      return Math.max(acc, frame.x + frame.width);
+    }, 0);
+    return Math.max(2200, maxX + 400);
+  }
+
+  surfaceHeight(board: { widgets: WidgetModel[] }): number {
+    const maxY = board.widgets.reduce((acc, widget) => {
+      const frame = this.frame(widget);
+      return Math.max(acc, frame.y + frame.height);
+    }, 0);
+    return Math.max(1400, maxY + 300);
+  }
+
   startDrag(widget: WidgetModel, event: MouseEvent): void {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -202,8 +251,8 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   onMouseMove(event: MouseEvent): void {
     if (!this.interaction) return;
 
-    const dx = event.clientX - this.interaction.startMouseX;
-    const dy = event.clientY - this.interaction.startMouseY;
+    const dx = (event.clientX - this.interaction.startMouseX) / this.zoom;
+    const dy = (event.clientY - this.interaction.startMouseY) / this.zoom;
     const { startFrame } = this.interaction;
 
     if (this.interaction.mode === 'drag') {
@@ -256,6 +305,46 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.zoomIndicatorTimer) {
+      clearTimeout(this.zoomIndicatorTimer);
+      this.zoomIndicatorTimer = null;
+    }
     this.facade.destroy();
+  }
+
+  private setZoomAtPoint(nextZoom: number, clientX?: number, clientY?: number): void {
+    const clamped = Math.max(this.minZoom, Math.min(this.maxZoom, nextZoom));
+    if (clamped === this.zoom) return;
+
+    const canvas = this.canvasRef?.nativeElement;
+    if (!canvas) {
+      this.zoom = clamped;
+      return;
+    }
+
+    const oldZoom = this.zoom;
+    const rect = canvas.getBoundingClientRect();
+    const anchorX = clientX !== undefined ? clientX - rect.left : canvas.clientWidth / 2;
+    const anchorY = clientY !== undefined ? clientY - rect.top : canvas.clientHeight / 2;
+
+    const worldX = (canvas.scrollLeft + anchorX) / oldZoom;
+    const worldY = (canvas.scrollTop + anchorY) / oldZoom;
+
+    this.zoom = clamped;
+    canvas.scrollLeft = worldX * clamped - anchorX;
+    canvas.scrollTop = worldY * clamped - anchorY;
+  }
+
+  private showZoomIndicator(clientX: number, clientY: number): void {
+    this.zoomIndicatorX = clientX + 14;
+    this.zoomIndicatorY = clientY + 14;
+    this.zoomIndicatorVisible = true;
+    if (this.zoomIndicatorTimer) {
+      clearTimeout(this.zoomIndicatorTimer);
+    }
+    this.zoomIndicatorTimer = setTimeout(() => {
+      this.zoomIndicatorVisible = false;
+      this.zoomIndicatorTimer = null;
+    }, 500);
   }
 }

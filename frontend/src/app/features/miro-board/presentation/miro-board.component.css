@@ -3,6 +3,24 @@
 .toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .board-layout { min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
 .canvas { position: relative; background: #fff; overflow: auto; min-height: 0; }
+.canvas-scroll-space { pointer-events: none; }
+.canvas-surface {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+}
+.zoom-indicator {
+  position: fixed;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
 .side-panel {
   border-left: 1px solid #e5e7eb;
   background: #f8fafc;
