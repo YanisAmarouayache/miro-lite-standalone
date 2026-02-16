@@ -1,0 +1,13 @@
+<div
+  *ngIf="menu"
+  class="context-menu"
+  [style.left.px]="menu.x"
+  [style.top.px]="menu.y"
+  (click)="$event.stopPropagation()"
+>
+  <button type="button" (click)="run('bring_to_front')">Tout devant</button>
+  <button type="button" (click)="run('bring_forward')">Avant</button>
+  <button type="button" (click)="run('send_backward')">Arrière</button>
+  <button type="button" (click)="run('send_to_back')">Tout derrière</button>
+  <button type="button" class="danger-action" (click)="run('remove')">Supprimer</button>
+</div>

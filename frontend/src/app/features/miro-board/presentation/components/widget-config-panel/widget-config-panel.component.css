@@ -1,0 +1,16 @@
+.selected-title { font-weight: 600; margin: 0; }
+.layer-label { margin: 0; color: #475569; font-size: 12px; }
+.layer-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.control-row { display: grid; gap: 6px; }
+.control-row input,
+.control-row textarea,
+.control-row select {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px;
+}

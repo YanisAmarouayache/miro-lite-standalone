@@ -1,51 +1,30 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { MiroBoardFacade } from '../application/miro-board.facade';
 import { WidgetModel } from '../domain/board.model';
-import { WidgetDefinition } from '../domain/widget-definition.model';
-
-type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
-
-interface WidgetFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface InteractionState {
-  widgetId: string;
-  mode: 'drag' | 'resize';
-  direction?: ResizeDirection;
-  startMouseX: number;
-  startMouseY: number;
-  startFrame: WidgetFrame;
-}
-
-interface ContextMenuState {
-  widgetId: string;
-  x: number;
-  y: number;
-}
+import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
+import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
+import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
+import { ResizeDirection, WidgetCanvasComponent, WidgetMouseEvent, WidgetResizeEvent, WidgetTextChangeEvent } from './components/widget-canvas/widget-canvas.component';
+import { WidgetInteractionService } from './services/widget-interaction.service';
 
 @Component({
   selector: 'miro-board',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  providers: [MiroBoardFacade],
+  imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
+  providers: [MiroBoardFacade, WidgetInteractionService],
   templateUrl: './miro-board.component.html',
-  styleUrl: './miro-board.component.css'
+  styleUrl: './miro-board.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MiroBoardComponent implements OnChanges, OnDestroy {
-  @ViewChild('canvasRef') private canvasRef?: ElementRef<HTMLDivElement>;
+  @ViewChild('canvasRef') private canvasRef?: WidgetCanvasComponent;
   @Input({ required: true }) boardId!: string;
   private readonly facade = inject(MiroBoardFacade);
+  private readonly interaction = inject(WidgetInteractionService);
   readonly board$ = this.facade.board$;
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
-  private readonly frameOverrides = new Map<string, WidgetFrame>();
-  private interaction?: InteractionState;
   private selectedWidgetId: string | null = null;
   zoom = 1;
   zoomIndicatorVisible = false;
@@ -56,17 +35,18 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   private readonly minZoom = 0.2;
   private readonly maxZoom = 3;
   private readonly zoomStep = 0.1;
-  private readonly minWidth = 120;
-  private readonly minHeight = 80;
 
   ngOnChanges(changes: SimpleChanges): void {
     const boardIdChange = changes['boardId'];
     if (!boardIdChange) return;
     const nextBoardId = boardIdChange.currentValue as string | undefined;
     if (!nextBoardId) return;
-    this.frameOverrides.clear();
-    this.interaction = undefined;
+    this.interaction.clearAll();
     this.facade.init(nextBoardId);
+  }
+
+  get frameOverrides() {
+    return this.interaction.frameOverrides;
   }
 
   addWidget(type: string): void {
@@ -98,39 +78,23 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   }
 
   updateText(id: string, text: string): void {
-    this.facade.updateConfig(id, { text });
+    this.facade.updateWidgetText(id, text);
   }
 
   updateChartType(id: string, chartType: string): void {
-    this.facade.updateConfig(id, { chartType });
+    this.facade.updateChartType(id, chartType);
   }
 
   updateCounterValue(id: string, value: string): void {
-    const parsed = Number(value);
-    this.facade.updateConfig(id, { value: Number.isFinite(parsed) ? parsed : 0 });
+    this.facade.updateCounterValue(id, value);
   }
 
   updateCounterLabel(id: string, label: string): void {
-    this.facade.updateConfig(id, { label });
+    this.facade.updateCounterLabel(id, label);
   }
 
-  updateImageFromFile(id: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = reader.result;
-      if (typeof src !== 'string') return;
-      this.facade.updateConfig(id, { src, alt: file.name });
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  widgetName(type: string): string {
-    const definition = this.availableWidgets.find((item) => item.type === type);
-    return definition?.name ?? type;
+  updateImageFromFile(id: string, file: File): void {
+    this.facade.updateImageFromFile(id, file);
   }
 
   selectedWidget(board: { widgets: WidgetModel[] }): WidgetModel | undefined {
@@ -140,6 +104,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   selectWidget(widgetId: string): void {
     this.selectedWidgetId = widgetId;
+    this.clearContextMenu();
   }
 
   clearSelection(): void {
@@ -147,95 +112,18 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     this.contextMenu = null;
   }
 
-  isSelected(widgetId: string): boolean {
-    return this.selectedWidgetId === widgetId;
-  }
-
-  private configOf(widget: WidgetModel): Record<string, unknown> {
-    return widget.config ?? {};
-  }
-
-  textValue(widget: WidgetModel): string {
-    const value = this.configOf(widget)['text'];
-    return typeof value === 'string' ? value : '';
-  }
-
-  chartType(widget: WidgetModel): string {
-    const value = this.configOf(widget)['chartType'];
-    return typeof value === 'string' ? value : 'pie';
-  }
-
-  imageSrc(widget: WidgetModel): string {
-    const value = this.configOf(widget)['src'];
-    return typeof value === 'string' ? value : '';
-  }
-
-  imageAlt(widget: WidgetModel): string {
-    const value = this.configOf(widget)['alt'];
-    return typeof value === 'string' ? value : 'Imported image';
-  }
-
-  counterValue(widget: WidgetModel): number {
-    const value = this.configOf(widget)['value'];
-    return typeof value === 'number' ? value : 0;
-  }
-
-  counterLabel(widget: WidgetModel): string {
-    const value = this.configOf(widget)['label'];
-    return typeof value === 'string' ? value : 'Metric';
-  }
-
-  trackByWidgetType(_: number, definition: WidgetDefinition): string {
-    return definition.type;
-  }
-
   remove(id: string): void {
     this.facade.remove(id);
-    this.contextMenu = null;
+    this.clearContextMenu();
     if (this.selectedWidgetId === id) {
       this.selectedWidgetId = null;
     }
-    this.frameOverrides.delete(id);
-    if (this.interaction?.widgetId === id) {
-      this.interaction = undefined;
-    }
-  }
-
-  bringForward(id: string): void {
-    this.facade.bringForward(id);
-    this.contextMenu = null;
-  }
-
-  sendBackward(id: string): void {
-    this.facade.sendBackward(id);
-    this.contextMenu = null;
-  }
-
-  bringToFront(id: string): void {
-    this.facade.bringToFront(id);
-    this.contextMenu = null;
-  }
-
-  sendToBack(id: string): void {
-    this.facade.sendToBack(id);
-    this.contextMenu = null;
+    this.interaction.clearWidget(id);
   }
 
   selectedLayerPosition(board: { widgets: WidgetModel[] }, widgetId: string): number {
     const index = board.widgets.findIndex((widget) => widget.id === widgetId);
     return index + 1;
-  }
-
-  orderedWidgets(board: { widgets: WidgetModel[] }): WidgetModel[] {
-    return [...board.widgets].reverse();
-  }
-
-  layerNumber(board: { widgets: WidgetModel[] }, widgetId: string): number {
-    return this.selectedLayerPosition(board, widgetId);
-  }
-
-  shortId(widgetId: string): string {
-    return widgetId.slice(0, 6);
   }
 
   openWidgetContextMenu(widgetId: string, event: MouseEvent): void {
@@ -258,138 +146,82 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
       event.preventDefault();
       event.stopPropagation();
     }
-    this.contextMenu = null;
+    this.clearContextMenu();
   }
 
-  trackByWidgetId(_: number, widget: WidgetModel): string {
-    return widget.id;
+  openWidgetContextMenuFromLayer(event: LayerListContextMenuEvent): void {
+    this.openWidgetContextMenu(event.widgetId, event.event);
   }
 
-  frame(widget: WidgetModel): WidgetFrame {
-    return this.frameOverrides.get(widget.id) ?? widget;
+  onWidgetContextMenu(event: WidgetMouseEvent): void {
+    this.openWidgetContextMenu(event.widgetId, event.event);
   }
 
-  surfaceWidth(board: { widgets: WidgetModel[] }): number {
-    const maxX = board.widgets.reduce((acc, widget) => {
-      const frame = this.frame(widget);
-      return Math.max(acc, frame.x + frame.width);
-    }, 0);
-    return Math.max(2200, maxX + 400);
+  onWidgetTextChange(event: WidgetTextChangeEvent): void {
+    this.updateText(event.widgetId, event.text);
   }
 
-  surfaceHeight(board: { widgets: WidgetModel[] }): number {
-    const maxY = board.widgets.reduce((acc, widget) => {
-      const frame = this.frame(widget);
-      return Math.max(acc, frame.y + frame.height);
-    }, 0);
-    return Math.max(1400, maxY + 300);
+  onContextMenuAction(event: ContextMenuActionEvent): void {
+    switch (event.action) {
+      case 'bring_to_front':
+        this.facade.bringToFront(event.widgetId);
+        break;
+      case 'bring_forward':
+        this.facade.bringForward(event.widgetId);
+        break;
+      case 'send_backward':
+        this.facade.sendBackward(event.widgetId);
+        break;
+      case 'send_to_back':
+        this.facade.sendToBack(event.widgetId);
+        break;
+      case 'remove':
+        this.remove(event.widgetId);
+        break;
+    }
+    this.clearContextMenu();
   }
 
   startDrag(widget: WidgetModel, event: MouseEvent): void {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
     this.selectedWidgetId = widget.id;
-    const startFrame = this.frame(widget);
-    this.interaction = {
-      widgetId: widget.id,
-      mode: 'drag',
-      startMouseX: event.clientX,
-      startMouseY: event.clientY,
-      startFrame
-    };
+    this.interaction.startDrag(widget, event);
   }
 
-  startDragFromSelection(widget: WidgetModel, event: MouseEvent): void {
-    if (event.button !== 0) return;
-    if (!this.isSelected(widget.id)) return;
-    const target = event.target as HTMLElement | null;
-    if (target?.closest('.resize-handle')) return;
-    if (target?.closest('textarea, input, select, button, [contenteditable="true"]')) return;
-    this.startDrag(widget, event);
+  onStartDragRequest(event: WidgetMouseEvent, widgets: WidgetModel[]): void {
+    const widget = widgets.find((item) => item.id === event.widgetId);
+    if (!widget) return;
+    this.startDrag(widget, event.event);
+  }
+
+  onStartResizeRequest(event: WidgetResizeEvent): void {
+    this.startResize(event.widget, event.direction, event.event);
   }
 
   startResize(widget: WidgetModel, direction: ResizeDirection, event: MouseEvent): void {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    event.stopPropagation();
     this.selectedWidgetId = widget.id;
-    const startFrame = this.frame(widget);
-    this.interaction = {
-      widgetId: widget.id,
-      mode: 'resize',
-      direction,
-      startMouseX: event.clientX,
-      startMouseY: event.clientY,
-      startFrame
-    };
+    this.interaction.startResize(widget, direction, event);
   }
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
-    if (!this.interaction) return;
-
-    const dx = (event.clientX - this.interaction.startMouseX) / this.zoom;
-    const dy = (event.clientY - this.interaction.startMouseY) / this.zoom;
-    const { startFrame } = this.interaction;
-
-    if (this.interaction.mode === 'drag') {
-      this.frameOverrides.set(this.interaction.widgetId, {
-        ...startFrame,
-        x: startFrame.x + dx,
-        y: startFrame.y + dy
-      });
-      return;
-    }
-
-    const direction = this.interaction.direction;
-    if (!direction) return;
-
-    let nextX = startFrame.x;
-    let nextY = startFrame.y;
-    let nextWidth = startFrame.width;
-    let nextHeight = startFrame.height;
-
-    if (direction.includes('e')) {
-      nextWidth = Math.max(this.minWidth, startFrame.width + dx);
-    }
-    if (direction.includes('s')) {
-      nextHeight = Math.max(this.minHeight, startFrame.height + dy);
-    }
-    if (direction.includes('w')) {
-      nextWidth = Math.max(this.minWidth, startFrame.width - dx);
-      nextX = startFrame.x + (startFrame.width - nextWidth);
-    }
-    if (direction.includes('n')) {
-      nextHeight = Math.max(this.minHeight, startFrame.height - dy);
-      nextY = startFrame.y + (startFrame.height - nextHeight);
-    }
-
-    this.frameOverrides.set(this.interaction.widgetId, {
-      x: nextX,
-      y: nextY,
-      width: nextWidth,
-      height: nextHeight
-    });
+    this.interaction.onPointerMove(event, this.zoom);
   }
 
   @HostListener('document:mouseup')
   onMouseUp(): void {
-    if (!this.interaction) return;
-    const frame = this.frameOverrides.get(this.interaction.widgetId) ?? this.interaction.startFrame;
-    this.facade.setWidgetFrame(this.interaction.widgetId, frame.x, frame.y, frame.width, frame.height);
-    this.frameOverrides.delete(this.interaction.widgetId);
-    this.interaction = undefined;
+    const commit = this.interaction.onPointerUp();
+    if (!commit) return;
+    this.facade.setWidgetFrame(commit.widgetId, commit.frame.x, commit.frame.y, commit.frame.width, commit.frame.height);
   }
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
-    this.contextMenu = null;
+    this.clearContextMenu();
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
-    this.contextMenu = null;
+    this.clearContextMenu();
   }
 
   ngOnDestroy(): void {
@@ -404,7 +236,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     const clamped = Math.max(this.minZoom, Math.min(this.maxZoom, nextZoom));
     if (clamped === this.zoom) return;
 
-    const canvas = this.canvasRef?.nativeElement;
+    const canvas = this.canvasRef?.getCanvasElement();
     if (!canvas) {
       this.zoom = clamped;
       return;
@@ -434,5 +266,9 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
       this.zoomIndicatorVisible = false;
       this.zoomIndicatorTimer = null;
     }, 500);
+  }
+
+  private clearContextMenu(): void {
+    this.contextMenu = null;
   }
 }

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, EMPTY, Subject, catchError, concatMap, debounceTime, filter, takeUntil, tap } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subject, catchError, concatMap, debounceTime, filter, mapTo, of, switchMap, takeUntil, tap } from 'rxjs';
 import { BoardModel, WidgetModel } from '../domain/board.model';
 import { BoardApiRepository } from '../infrastructure/board-api.repository';
 import { WidgetCatalogRepository } from '../infrastructure/widget-catalog.repository';
@@ -14,6 +14,7 @@ export class MiroBoardFacade {
   private readonly boardSubject = new BehaviorSubject<BoardModel>({ id: '', version: 1, widgets: [] });
   private autosaveStarted = false;
   private currentBoardId = '';
+  private loadRequestId = 0;
 
   readonly board$ = this.boardSubject.asObservable();
   readonly availableWidgets: WidgetDefinition[] = this.widgetCatalog.list();
@@ -61,6 +62,33 @@ export class MiroBoardFacade {
           : w
       )
     });
+  }
+
+  updateWidgetText(id: string, text: string): void {
+    this.updateConfig(id, { text });
+  }
+
+  updateChartType(id: string, chartType: string): void {
+    this.updateConfig(id, { chartType });
+  }
+
+  updateCounterLabel(id: string, label: string): void {
+    this.updateConfig(id, { label });
+  }
+
+  updateCounterValue(id: string, value: string): void {
+    const parsed = Number(value);
+    this.updateConfig(id, { value: Number.isFinite(parsed) ? parsed : 0 });
+  }
+
+  updateImageFromFile(id: string, file: File): void {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result;
+      if (typeof src !== 'string') return;
+      this.updateConfig(id, { src, alt: file.name });
+    };
+    reader.readAsDataURL(file);
   }
 
   remove(id: string): void {
@@ -112,33 +140,21 @@ export class MiroBoardFacade {
       .pipe(
         filter(() => !!this.boardSubject.value.id),
         debounceTime(300),
-        concatMap(() => {
-          const board = this.boardSubject.value;
-          return this.repo.save(board).pipe(
-            tap(() => {
-              const current = this.boardSubject.value;
-              if (current.id === board.id) {
-                this.boardSubject.next({ ...current, version: current.version + 1 });
-              }
-            }),
-            catchError((e) => {
-              console.error('save failed', e);
-              if (e?.status === 409 && this.currentBoardId) {
-                this.loadBoard(this.currentBoardId);
-              }
-              return EMPTY;
-            })
-          );
-        }),
+        concatMap(() => this.persistWithLastWriteWins()),
         takeUntil(this.destroy$)
       )
       .subscribe();
   }
 
   private loadBoard(boardId: string): void {
+    const requestId = ++this.loadRequestId;
     this.repo.load(boardId).subscribe({
-      next: (board) => this.boardSubject.next(board),
+      next: (board) => {
+        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId) return;
+        this.boardSubject.next(board);
+      },
       error: () => {
+        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId) return;
         this.boardSubject.next({ id: boardId, version: 1, widgets: [] });
       }
     });
@@ -160,5 +176,52 @@ export class MiroBoardFacade {
     const [moved] = next.splice(index, 1);
     next.splice(target, 0, moved);
     this.patch({ ...board, widgets: next });
+  }
+
+  private persistWithLastWriteWins(): Observable<void> {
+    const localBoard = this.boardSubject.value;
+    return this.repo.save(localBoard).pipe(
+      tap(() => {
+        const current = this.boardSubject.value;
+        if (current.id === localBoard.id) {
+          this.boardSubject.next({ ...current, version: current.version + 1 });
+        }
+      }),
+      catchError((e) => {
+        if (e?.status !== 409) {
+          console.error('save failed', e);
+          return EMPTY;
+        }
+        return this.retrySaveWithLatestServerVersion(localBoard.id);
+      })
+    );
+  }
+
+  private retrySaveWithLatestServerVersion(boardId: string): Observable<void> {
+    return this.repo.load(boardId).pipe(
+      switchMap((serverBoard) => {
+        const latestLocal = this.boardSubject.value;
+        if (latestLocal.id !== boardId) {
+          return of(void 0);
+        }
+        return this.repo
+          .save({
+            ...latestLocal,
+            version: serverBoard.version
+          })
+          .pipe(
+            tap(() => {
+              const current = this.boardSubject.value;
+              if (current.id !== boardId) return;
+              this.boardSubject.next({ ...current, version: serverBoard.version + 1 });
+            }),
+            mapTo(void 0)
+          );
+      }),
+      catchError((retryError) => {
+        console.error('save failed after conflict retry', retryError);
+        return EMPTY;
+      })
+    );
   }
 }

@@ -1,0 +1,14 @@
+<h4>Layers</h4>
+<div class="layer-list">
+  <button
+    type="button"
+    class="layer-item"
+    [class.layer-item-selected]="isSelected(widget.id)"
+    *ngFor="let widget of orderedWidgets(); trackBy: trackByWidgetId"
+    (click)="selectWidget.emit(widget.id)"
+    (contextmenu)="onContextMenu(widget.id, $event)"
+  >
+    <span>{{ widgetName(widget.type) }} · {{ shortId(widget.id) }}</span>
+    <span>L{{ layerNumber(widget.id) }}</span>
+  </button>
+</div>

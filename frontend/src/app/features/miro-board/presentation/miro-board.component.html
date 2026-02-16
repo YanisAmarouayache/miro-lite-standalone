@@ -5,160 +5,66 @@
       <button type="button" (click)="zoomOut()">-</button>
       <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
       <button type="button" (click)="zoomIn()">+</button>
-      <button type="button" *ngFor="let definition of availableWidgets; trackBy: trackByWidgetType" (click)="addWidget(definition.type)">
+      <button type="button" *ngFor="let definition of availableWidgets" (click)="addWidget(definition.type)">
         + {{ definition.name }}
       </button>
     </div>
   </header>
 
   <div class="board-layout">
-    <div #canvasRef class="canvas" (click)="clearSelection()" (wheel)="onCanvasWheel($event)" (contextmenu)="closeContextMenu($event)">
-      <div
-        *ngIf="zoomIndicatorVisible"
-        class="zoom-indicator"
-        [style.left.px]="zoomIndicatorX"
-        [style.top.px]="zoomIndicatorY"
-      >
-        {{ zoomPercent() }}%
-      </div>
-      <div
-        class="canvas-scroll-space"
-        [style.width.px]="surfaceWidth(board) * zoom"
-        [style.height.px]="surfaceHeight(board) * zoom"
-      ></div>
-      <div
-        class="canvas-surface"
-        [style.width.px]="surfaceWidth(board)"
-        [style.height.px]="surfaceHeight(board)"
-        [style.transform]="'scale(' + zoom + ')'"
-      >
-        <article
-          class="widget"
-          [class.widget-yellow-box]="w.type === 'text'"
-          [class.widget-selected]="isSelected(w.id)"
-          *ngFor="let w of board.widgets; trackBy: trackByWidgetId"
-          [style.left.px]="frame(w).x"
-          [style.top.px]="frame(w).y"
-          [style.width.px]="frame(w).width"
-          [style.height.px]="frame(w).height"
-          (click)="selectWidget(w.id); $event.stopPropagation()"
-          (mousedown)="startDragFromSelection(w, $event)"
-          (contextmenu)="openWidgetContextMenu(w.id, $event)"
-        >
-          <div class="drag-surface" (mousedown)="startDragFromSelection(w, $event)"></div>
-
-          <div class="widget-content" [ngSwitch]="w.type">
-            <textarea
-              *ngSwitchCase="'text'"
-              class="inline-yellow-editor"
-              [ngModel]="textValue(w)"
-              (ngModelChange)="updateText(w.id, $event)"
-            ></textarea>
-            <textarea
-              *ngSwitchCase="'textarea'"
-              class="inline-textarea-editor"
-              [ngModel]="textValue(w)"
-              (ngModelChange)="updateText(w.id, $event)"
-            ></textarea>
-            <div *ngSwitchCase="'chart'" class="chart-widget">
-              <p>Chart: {{ chartType(w) }}</p>
-            </div>
-            <div *ngSwitchCase="'counter'" class="counter-widget">
-              <p>{{ counterLabel(w) }}</p>
-              <h2>{{ counterValue(w) }}</h2>
-            </div>
-            <div *ngSwitchCase="'table'" class="table-widget">
-              <p>Table widget</p>
-            </div>
-            <div *ngSwitchCase="'image'" class="image-widget">
-              <img *ngIf="imageSrc(w)" [src]="imageSrc(w)" [alt]="imageAlt(w)" />
-              <p *ngIf="!imageSrc(w)">No image yet</p>
-            </div>
-          </div>
-
-          <button type="button" class="resize-handle resize-n" (mousedown)="startResize(w, 'n', $event)"></button>
-          <button type="button" class="resize-handle resize-s" (mousedown)="startResize(w, 's', $event)"></button>
-          <button type="button" class="resize-handle resize-e" (mousedown)="startResize(w, 'e', $event)"></button>
-          <button type="button" class="resize-handle resize-w" (mousedown)="startResize(w, 'w', $event)"></button>
-          <button type="button" class="resize-handle resize-ne" (mousedown)="startResize(w, 'ne', $event)"></button>
-          <button type="button" class="resize-handle resize-nw" (mousedown)="startResize(w, 'nw', $event)"></button>
-          <button type="button" class="resize-handle resize-se" (mousedown)="startResize(w, 'se', $event)"></button>
-          <button type="button" class="resize-handle resize-sw" (mousedown)="startResize(w, 'sw', $event)"></button>
-        </article>
-      </div>
-    </div>
-
-    <div
-      *ngIf="contextMenu as menu"
-      class="context-menu"
-      [style.left.px]="menu.x"
-      [style.top.px]="menu.y"
-      (click)="$event.stopPropagation()"
-    >
-      <button type="button" (click)="bringToFront(menu.widgetId)">Tout devant</button>
-      <button type="button" (click)="bringForward(menu.widgetId)">Avant</button>
-      <button type="button" (click)="sendBackward(menu.widgetId)">Arrière</button>
-      <button type="button" (click)="sendToBack(menu.widgetId)">Tout derrière</button>
-      <button type="button" class="danger-action" (click)="remove(menu.widgetId)">Supprimer</button>
-    </div>
+    <app-widget-canvas
+      #canvasRef
+      [widgets]="board.widgets"
+      [frameOverrides]="frameOverrides"
+      [selectedWidgetId]="selectedWidget(board)?.id ?? null"
+      [zoom]="zoom"
+      [zoomIndicatorVisible]="zoomIndicatorVisible"
+      [zoomIndicatorX]="zoomIndicatorX"
+      [zoomIndicatorY]="zoomIndicatorY"
+      (canvasClick)="clearSelection()"
+      (canvasWheel)="onCanvasWheel($event)"
+      (canvasContextMenu)="closeContextMenu($event)"
+      (selectWidget)="selectWidget($event)"
+      (openWidgetContextMenu)="onWidgetContextMenu($event)"
+      (startDrag)="onStartDragRequest($event, board.widgets)"
+      (startResize)="onStartResizeRequest($event)"
+      (updateText)="onWidgetTextChange($event)"
+    ></app-widget-canvas>
 
     <aside class="side-panel">
-      <h4>Layers</h4>
-      <div class="layer-list">
-        <button
-          type="button"
-          class="layer-item"
-          [class.layer-item-selected]="isSelected(widget.id)"
-          *ngFor="let widget of orderedWidgets(board); trackBy: trackByWidgetId"
-          (click)="selectWidget(widget.id)"
-          (contextmenu)="openWidgetContextMenu(widget.id, $event)"
-        >
-          <span>{{ widgetName(widget.type) }} · {{ shortId(widget.id) }}</span>
-          <span>L{{ layerNumber(board, widget.id) }}</span>
-        </button>
-      </div>
+      <app-layer-list
+        [widgets]="board.widgets"
+        [selectedWidgetId]="selectedWidget(board)?.id ?? null"
+        [definitions]="availableWidgets"
+        (selectWidget)="selectWidget($event)"
+        (openContextMenu)="openWidgetContextMenuFromLayer($event)"
+      ></app-layer-list>
 
-      <h4>Configuration</h4>
-      <ng-container *ngIf="selectedWidget(board) as selected; else noSelection">
-        <p class="selected-title">{{ widgetName(selected.type) }}</p>
-        <p class="layer-label">Layer {{ selectedLayerPosition(board, selected.id) }} / {{ board.widgets.length }}</p>
-        <div class="layer-actions">
-          <button type="button" (click)="sendToBack(selected.id)">Tout derrière</button>
-          <button type="button" (click)="sendBackward(selected.id)">Arrière</button>
-          <button type="button" (click)="bringForward(selected.id)">Avant</button>
-          <button type="button" (click)="bringToFront(selected.id)">Tout devant</button>
-        </div>
-        <button type="button" (click)="remove(selected.id)">Supprimer</button>
-
-        <label *ngIf="selected.type === 'text' || selected.type === 'textarea'" class="control-row">
-          Texte
-          <textarea [ngModel]="textValue(selected)" (ngModelChange)="updateText(selected.id, $event)"></textarea>
-        </label>
-
-        <label *ngIf="selected.type === 'chart'" class="control-row">
-          Type
-          <select [ngModel]="chartType(selected)" (ngModelChange)="updateChartType(selected.id, $event)">
-            <option *ngFor="let type of chartTypes" [value]="type">{{ type }}</option>
-          </select>
-        </label>
-
-        <label *ngIf="selected.type === 'counter'" class="control-row">
-          Label
-          <input type="text" [ngModel]="counterLabel(selected)" (ngModelChange)="updateCounterLabel(selected.id, $event)" />
-        </label>
-        <label *ngIf="selected.type === 'counter'" class="control-row">
-          Value
-          <input type="number" [ngModel]="counterValue(selected)" (ngModelChange)="updateCounterValue(selected.id, $event)" />
-        </label>
-
-        <label *ngIf="selected.type === 'image'" class="control-row">
-          Import image
-          <input type="file" accept="image/*" (change)="updateImageFromFile(selected.id, $event)" />
-        </label>
+      <ng-container *ngIf="selectedWidget(board) as selected; else noSelectedWidget">
+        <app-widget-config-panel
+          [selectedWidget]="selected"
+          [widgetCount]="board.widgets.length"
+          [layerPosition]="selectedLayerPosition(board, selected.id)"
+          [chartTypes]="chartTypes"
+          [definitions]="availableWidgets"
+          (action)="onContextMenuAction({ widgetId: selected.id, action: $event })"
+          (updateText)="updateText(selected.id, $event)"
+          (updateChartType)="updateChartType(selected.id, $event)"
+          (updateCounterLabel)="updateCounterLabel(selected.id, $event)"
+          (updateCounterValue)="updateCounterValue(selected.id, $event)"
+          (imageSelected)="updateImageFromFile(selected.id, $event)"
+        ></app-widget-config-panel>
       </ng-container>
-      <ng-template #noSelection>
-        <p>Sélectionne un widget pour le configurer.</p>
+      <ng-template #noSelectedWidget>
+        <app-widget-config-panel
+          [widgetCount]="board.widgets.length"
+          [layerPosition]="0"
+          [chartTypes]="chartTypes"
+          [definitions]="availableWidgets"
+        ></app-widget-config-panel>
       </ng-template>
     </aside>
   </div>
+
+  <app-widget-context-menu [menu]="contextMenu" (action)="onContextMenuAction($event)"></app-widget-context-menu>
 </section>
