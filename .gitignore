@@ -1,2 +1,4 @@
 frontend/.angular/
 frontend/.angular/**
+backend/cmd/server/data/boards.json
+frontend/.angular/cache/17.3.17/miro-lite-standalone-frontend/.tsbuildinfo

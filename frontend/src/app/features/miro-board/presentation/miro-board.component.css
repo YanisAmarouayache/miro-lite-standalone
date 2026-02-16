@@ -21,6 +21,30 @@
   line-height: 1;
   pointer-events: none;
 }
+.context-menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 170px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+}
+.context-menu button {
+  text-align: left;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.context-menu button:hover {
+  background: #f1f5f9;
+}
+.context-menu .danger-action {
+  color: #b91c1c;
+}
 .side-panel {
   border-left: 1px solid #e5e7eb;
   background: #f8fafc;
@@ -35,7 +59,7 @@
   box-sizing: border-box;
   border: 1px solid transparent;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px;
   display: grid;
   user-select: none;
@@ -61,26 +85,6 @@
   background: transparent;
   resize: none;
   outline: none;
-}
-
-.drag-handle {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  cursor: grab;
-  padding: 0;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.drag-handle:active {
-  cursor: grabbing;
 }
 
 .textarea-widget {
@@ -142,13 +146,6 @@ button {
 }
 
 .widget-selected .resize-handle {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.widget:hover .drag-handle,
-.widget-selected .drag-handle,
-.widget:focus-within .drag-handle {
   opacity: 1;
   pointer-events: auto;
 }

@@ -12,7 +12,7 @@
   </header>
 
   <div class="board-layout">
-    <div #canvasRef class="canvas" (click)="clearSelection()" (wheel)="onCanvasWheel($event)">
+    <div #canvasRef class="canvas" (click)="clearSelection()" (wheel)="onCanvasWheel($event)" (contextmenu)="closeContextMenu($event)">
       <div
         *ngIf="zoomIndicatorVisible"
         class="zoom-indicator"
@@ -42,11 +42,9 @@
           [style.width.px]="frame(w).width"
           [style.height.px]="frame(w).height"
           (click)="selectWidget(w.id); $event.stopPropagation()"
+          (mousedown)="startDragFromSelection(w, $event)"
+          (contextmenu)="openWidgetContextMenu(w.id, $event)"
         >
-          <button type="button" class="drag-handle" (mousedown)="startDrag(w, $event)" aria-label="Déplacer">
-            ⠿
-          </button>
-
           <div class="widget-content" [ngSwitch]="w.type">
             <div *ngSwitchCase="'text'" class="text-render">{{ textValue(w) }}</div>
             <div *ngSwitchCase="'textarea'" class="text-render">{{ textValue(w) }}</div>
@@ -78,6 +76,20 @@
       </div>
     </div>
 
+    <div
+      *ngIf="contextMenu as menu"
+      class="context-menu"
+      [style.left.px]="menu.x"
+      [style.top.px]="menu.y"
+      (click)="$event.stopPropagation()"
+    >
+      <button type="button" (click)="bringToFront(menu.widgetId)">Tout devant</button>
+      <button type="button" (click)="bringForward(menu.widgetId)">Avant</button>
+      <button type="button" (click)="sendBackward(menu.widgetId)">Arrière</button>
+      <button type="button" (click)="sendToBack(menu.widgetId)">Tout derrière</button>
+      <button type="button" class="danger-action" (click)="remove(menu.widgetId)">Supprimer</button>
+    </div>
+
     <aside class="side-panel">
       <h4>Layers</h4>
       <div class="layer-list">
@@ -87,6 +99,7 @@
           [class.layer-item-selected]="isSelected(widget.id)"
           *ngFor="let widget of orderedWidgets(board); trackBy: trackByWidgetId"
           (click)="selectWidget(widget.id)"
+          (contextmenu)="openWidgetContextMenu(widget.id, $event)"
         >
           <span>{{ widgetName(widget.type) }} · {{ shortId(widget.id) }}</span>
           <span>L{{ layerNumber(board, widget.id) }}</span>

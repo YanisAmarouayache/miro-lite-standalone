@@ -23,6 +23,12 @@ interface InteractionState {
   startFrame: WidgetFrame;
 }
 
+interface ContextMenuState {
+  widgetId: string;
+  x: number;
+  y: number;
+}
+
 @Component({
   selector: 'miro-board',
   standalone: true,
@@ -45,6 +51,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
   zoomIndicatorVisible = false;
   zoomIndicatorX = 0;
   zoomIndicatorY = 0;
+  contextMenu: ContextMenuState | null = null;
   private zoomIndicatorTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly minZoom = 0.2;
   private readonly maxZoom = 3;
@@ -137,6 +144,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   clearSelection(): void {
     this.selectedWidgetId = null;
+    this.contextMenu = null;
   }
 
   isSelected(widgetId: string): boolean {
@@ -183,6 +191,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   remove(id: string): void {
     this.facade.remove(id);
+    this.contextMenu = null;
     if (this.selectedWidgetId === id) {
       this.selectedWidgetId = null;
     }
@@ -194,18 +203,22 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   bringForward(id: string): void {
     this.facade.bringForward(id);
+    this.contextMenu = null;
   }
 
   sendBackward(id: string): void {
     this.facade.sendBackward(id);
+    this.contextMenu = null;
   }
 
   bringToFront(id: string): void {
     this.facade.bringToFront(id);
+    this.contextMenu = null;
   }
 
   sendToBack(id: string): void {
     this.facade.sendToBack(id);
+    this.contextMenu = null;
   }
 
   selectedLayerPosition(board: { widgets: WidgetModel[] }, widgetId: string): number {
@@ -223,6 +236,29 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
 
   shortId(widgetId: string): string {
     return widgetId.slice(0, 6);
+  }
+
+  openWidgetContextMenu(widgetId: string, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.selectedWidgetId = widgetId;
+    const menuWidth = 180;
+    const menuHeight = 220;
+    const x = Math.min(event.clientX, window.innerWidth - menuWidth - 8);
+    const y = Math.min(event.clientY, window.innerHeight - menuHeight - 8);
+    this.contextMenu = {
+      widgetId,
+      x: Math.max(8, x),
+      y: Math.max(8, y)
+    };
+  }
+
+  closeContextMenu(event?: MouseEvent): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.contextMenu = null;
   }
 
   trackByWidgetId(_: number, widget: WidgetModel): string {
@@ -262,6 +298,14 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
       startMouseY: event.clientY,
       startFrame
     };
+  }
+
+  startDragFromSelection(widget: WidgetModel, event: MouseEvent): void {
+    if (event.button !== 0) return;
+    if (!this.isSelected(widget.id)) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('.resize-handle')) return;
+    this.startDrag(widget, event);
   }
 
   startResize(widget: WidgetModel, direction: ResizeDirection, event: MouseEvent): void {
@@ -335,6 +379,16 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     this.facade.setWidgetFrame(this.interaction.widgetId, frame.x, frame.y, frame.width, frame.height);
     this.frameOverrides.delete(this.interaction.widgetId);
     this.interaction = undefined;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.contextMenu = null;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.contextMenu = null;
   }
 
   ngOnDestroy(): void {
