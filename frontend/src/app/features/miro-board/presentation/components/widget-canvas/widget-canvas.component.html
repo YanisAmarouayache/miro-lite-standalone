@@ -68,7 +68,7 @@
           <p>Table widget</p>
         </div>
         <div *ngSwitchCase="'image'" class="image-widget">
-          <img *ngIf="imageSrc(w)" [src]="imageSrc(w)" [alt]="imageAlt(w)" />
+          <img *ngIf="imageSrc(w)" [src]="imageSrc(w)" [alt]="imageAlt(w)" draggable="false" />
           <p *ngIf="!imageSrc(w)">No image yet</p>
         </div>
       </div>
