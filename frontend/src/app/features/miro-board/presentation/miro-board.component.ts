@@ -305,6 +305,7 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     if (!this.isSelected(widget.id)) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest('.resize-handle')) return;
+    if (target?.closest('textarea, input, select, button, [contenteditable="true"]')) return;
     this.startDrag(widget, event);
   }
 

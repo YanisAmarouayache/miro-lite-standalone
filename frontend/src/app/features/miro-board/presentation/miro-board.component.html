@@ -45,9 +45,21 @@
           (mousedown)="startDragFromSelection(w, $event)"
           (contextmenu)="openWidgetContextMenu(w.id, $event)"
         >
+          <div class="drag-surface" (mousedown)="startDragFromSelection(w, $event)"></div>
+
           <div class="widget-content" [ngSwitch]="w.type">
-            <div *ngSwitchCase="'text'" class="text-render">{{ textValue(w) }}</div>
-            <div *ngSwitchCase="'textarea'" class="text-render">{{ textValue(w) }}</div>
+            <textarea
+              *ngSwitchCase="'text'"
+              class="inline-yellow-editor"
+              [ngModel]="textValue(w)"
+              (ngModelChange)="updateText(w.id, $event)"
+            ></textarea>
+            <textarea
+              *ngSwitchCase="'textarea'"
+              class="inline-textarea-editor"
+              [ngModel]="textValue(w)"
+              (ngModelChange)="updateText(w.id, $event)"
+            ></textarea>
             <div *ngSwitchCase="'chart'" class="chart-widget">
               <p>Chart: {{ chartType(w) }}</p>
             </div>
