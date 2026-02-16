@@ -1,0 +1,95 @@
+<section class="miro-board-shell" *ngIf="board$ | async as board">
+  <header class="toolbar">
+    <h3>Board: {{ board.id }}</h3>
+    <div class="toolbar-actions">
+      <button type="button" *ngFor="let definition of availableWidgets; trackBy: trackByWidgetType" (click)="addWidget(definition.type)">
+        + {{ definition.name }}
+      </button>
+    </div>
+  </header>
+
+  <div class="board-layout">
+    <div class="canvas" (click)="clearSelection()">
+      <article
+        class="widget"
+        [class.widget-yellow-box]="w.type === 'text'"
+        [class.widget-selected]="isSelected(w.id)"
+        *ngFor="let w of board.widgets; trackBy: trackByWidgetId"
+        [style.left.px]="frame(w).x"
+        [style.top.px]="frame(w).y"
+        [style.width.px]="frame(w).width"
+        [style.height.px]="frame(w).height"
+        (click)="selectWidget(w.id); $event.stopPropagation()"
+      >
+        <button type="button" class="drag-handle" (mousedown)="startDrag(w, $event)" aria-label="Déplacer">
+          ⠿
+        </button>
+
+        <div class="widget-content" [ngSwitch]="w.type">
+          <div *ngSwitchCase="'text'" class="text-render">{{ textValue(w) }}</div>
+          <div *ngSwitchCase="'textarea'" class="text-render">{{ textValue(w) }}</div>
+          <div *ngSwitchCase="'chart'" class="chart-widget">
+            <p>Chart: {{ chartType(w) }}</p>
+          </div>
+          <div *ngSwitchCase="'counter'" class="counter-widget">
+            <p>{{ counterLabel(w) }}</p>
+            <h2>{{ counterValue(w) }}</h2>
+          </div>
+          <div *ngSwitchCase="'table'" class="table-widget">
+            <p>Table widget</p>
+          </div>
+          <div *ngSwitchCase="'image'" class="image-widget">
+            <img *ngIf="imageSrc(w)" [src]="imageSrc(w)" [alt]="imageAlt(w)" />
+            <p *ngIf="!imageSrc(w)">No image yet</p>
+          </div>
+        </div>
+
+        <button type="button" class="resize-handle resize-n" (mousedown)="startResize(w, 'n', $event)"></button>
+        <button type="button" class="resize-handle resize-s" (mousedown)="startResize(w, 's', $event)"></button>
+        <button type="button" class="resize-handle resize-e" (mousedown)="startResize(w, 'e', $event)"></button>
+        <button type="button" class="resize-handle resize-w" (mousedown)="startResize(w, 'w', $event)"></button>
+        <button type="button" class="resize-handle resize-ne" (mousedown)="startResize(w, 'ne', $event)"></button>
+        <button type="button" class="resize-handle resize-nw" (mousedown)="startResize(w, 'nw', $event)"></button>
+        <button type="button" class="resize-handle resize-se" (mousedown)="startResize(w, 'se', $event)"></button>
+        <button type="button" class="resize-handle resize-sw" (mousedown)="startResize(w, 'sw', $event)"></button>
+      </article>
+    </div>
+
+    <aside class="side-panel">
+      <h4>Configuration</h4>
+      <ng-container *ngIf="selectedWidget(board) as selected; else noSelection">
+        <p class="selected-title">{{ widgetName(selected.type) }}</p>
+        <button type="button" (click)="remove(selected.id)">Supprimer</button>
+
+        <label *ngIf="selected.type === 'text' || selected.type === 'textarea'" class="control-row">
+          Texte
+          <textarea [ngModel]="textValue(selected)" (ngModelChange)="updateText(selected.id, $event)"></textarea>
+        </label>
+
+        <label *ngIf="selected.type === 'chart'" class="control-row">
+          Type
+          <select [ngModel]="chartType(selected)" (ngModelChange)="updateChartType(selected.id, $event)">
+            <option *ngFor="let type of chartTypes" [value]="type">{{ type }}</option>
+          </select>
+        </label>
+
+        <label *ngIf="selected.type === 'counter'" class="control-row">
+          Label
+          <input type="text" [ngModel]="counterLabel(selected)" (ngModelChange)="updateCounterLabel(selected.id, $event)" />
+        </label>
+        <label *ngIf="selected.type === 'counter'" class="control-row">
+          Value
+          <input type="number" [ngModel]="counterValue(selected)" (ngModelChange)="updateCounterValue(selected.id, $event)" />
+        </label>
+
+        <label *ngIf="selected.type === 'image'" class="control-row">
+          Import image
+          <input type="file" accept="image/*" (change)="updateImageFromFile(selected.id, $event)" />
+        </label>
+      </ng-container>
+      <ng-template #noSelection>
+        <p>Sélectionne un widget pour le configurer.</p>
+      </ng-template>
+    </aside>
+  </div>
+</section>
