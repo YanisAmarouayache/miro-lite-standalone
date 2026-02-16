@@ -1,2 +1,21 @@
 * { box-sizing: border-box; }
-body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+:root {
+  --miro-bg: #f4f6fb;
+  --miro-surface: #ffffff;
+  --miro-surface-soft: #f8faff;
+  --miro-border: #dbe4f0;
+  --miro-border-strong: #c8d6ea;
+  --miro-text: #1f2a44;
+  --miro-muted: #60718f;
+  --miro-accent: #4b7cff;
+  --miro-accent-soft: rgba(75, 124, 255, 0.2);
+  --miro-danger: #c7354a;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--miro-text);
+  background: radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%), var(--miro-bg);
+}

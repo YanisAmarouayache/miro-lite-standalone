@@ -4,7 +4,16 @@
   min-height: 0;
 }
 
-.canvas { position: relative; background: #fff; overflow: auto; min-height: 0; }
+.canvas {
+  position: relative;
+  background:
+    linear-gradient(var(--miro-surface), var(--miro-surface)) padding-box,
+    linear-gradient(transparent 23px, rgba(89, 110, 154, 0.08) 24px),
+    linear-gradient(90deg, transparent 23px, rgba(89, 110, 154, 0.08) 24px);
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+  overflow: auto;
+  min-height: 0;
+}
 .canvas-scroll-space { pointer-events: none; }
 .canvas-surface {
   position: absolute;
@@ -29,7 +38,7 @@
   position: absolute;
   box-sizing: border-box;
   border: 1px solid transparent;
-  background: #fff;
+  background: var(--miro-surface);
   border-radius: 0;
   padding: 10px;
   display: grid;
@@ -43,8 +52,8 @@
 }
 
 .widget-selected {
-  border-color: rgba(37, 99, 235, 0.55);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+  border-color: var(--miro-accent);
+  box-shadow: 0 0 0 2px var(--miro-accent-soft);
 }
 
 .widget-selected:not(.widget-textual) {
@@ -106,7 +115,7 @@
 }
 
 .inline-textarea-editor {
-  background: #fff;
+  background: var(--miro-surface);
   overflow: hidden;
   scrollbar-width: none;
 }
@@ -154,8 +163,8 @@ button {
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.22);
-  background: #fff;
+  border: 1px solid rgba(89, 110, 154, 0.4);
+  background: var(--miro-surface);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 

@@ -2,10 +2,10 @@
   position: fixed;
   z-index: 40;
   min-width: 170px;
-  background: #fff;
-  border: 1px solid #d1d5db;
+  background: var(--miro-surface);
+  border: 1px solid var(--miro-border);
   border-radius: 10px;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
+  box-shadow: 0 14px 28px rgba(22, 33, 56, 0.16);
   padding: 6px;
   display: grid;
   gap: 4px;
@@ -15,13 +15,15 @@
   text-align: left;
   border: 0;
   border-radius: 6px;
+  background: transparent;
+  color: var(--miro-text);
   padding: 8px 10px;
 }
 
 .context-menu button:hover {
-  background: #f1f5f9;
+  background: var(--miro-surface-soft);
 }
 
 .context-menu .danger-action {
-  color: #b91c1c;
+  color: var(--miro-danger);
 }
