@@ -192,6 +192,39 @@ export class MiroBoardComponent implements OnChanges, OnDestroy {
     }
   }
 
+  bringForward(id: string): void {
+    this.facade.bringForward(id);
+  }
+
+  sendBackward(id: string): void {
+    this.facade.sendBackward(id);
+  }
+
+  bringToFront(id: string): void {
+    this.facade.bringToFront(id);
+  }
+
+  sendToBack(id: string): void {
+    this.facade.sendToBack(id);
+  }
+
+  selectedLayerPosition(board: { widgets: WidgetModel[] }, widgetId: string): number {
+    const index = board.widgets.findIndex((widget) => widget.id === widgetId);
+    return index + 1;
+  }
+
+  orderedWidgets(board: { widgets: WidgetModel[] }): WidgetModel[] {
+    return [...board.widgets].reverse();
+  }
+
+  layerNumber(board: { widgets: WidgetModel[] }, widgetId: string): number {
+    return this.selectedLayerPosition(board, widgetId);
+  }
+
+  shortId(widgetId: string): string {
+    return widgetId.slice(0, 6);
+  }
+
   trackByWidgetId(_: number, widget: WidgetModel): string {
     return widget.id;
   }

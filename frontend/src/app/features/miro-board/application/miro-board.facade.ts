@@ -71,6 +71,34 @@ export class MiroBoardFacade {
     });
   }
 
+  bringForward(id: string): void {
+    this.reorder(id, 1);
+  }
+
+  sendBackward(id: string): void {
+    this.reorder(id, -1);
+  }
+
+  bringToFront(id: string): void {
+    const board = this.boardSubject.value;
+    const index = board.widgets.findIndex((widget) => widget.id === id);
+    if (index < 0 || index === board.widgets.length - 1) return;
+    const next = [...board.widgets];
+    const [widget] = next.splice(index, 1);
+    next.push(widget);
+    this.patch({ ...board, widgets: next });
+  }
+
+  sendToBack(id: string): void {
+    const board = this.boardSubject.value;
+    const index = board.widgets.findIndex((widget) => widget.id === id);
+    if (index <= 0) return;
+    const next = [...board.widgets];
+    const [widget] = next.splice(index, 1);
+    next.unshift(widget);
+    this.patch({ ...board, widgets: next });
+  }
+
   destroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -119,5 +147,18 @@ export class MiroBoardFacade {
   private patch(next: BoardModel): void {
     this.boardSubject.next(next);
     this.saveRequests$.next(next);
+  }
+
+  private reorder(id: string, direction: 1 | -1): void {
+    const board = this.boardSubject.value;
+    const index = board.widgets.findIndex((widget) => widget.id === id);
+    if (index < 0) return;
+    const target = index + direction;
+    if (target < 0 || target >= board.widgets.length) return;
+
+    const next = [...board.widgets];
+    const [moved] = next.splice(index, 1);
+    next.splice(target, 0, moved);
+    this.patch({ ...board, widgets: next });
   }
 }
