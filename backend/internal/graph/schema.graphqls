@@ -1,0 +1,49 @@
+type Board {
+  id: ID!
+  title: String!
+  items: [Item!]!
+}
+
+interface Item {
+  id: ID!
+  x: Float!
+  y: Float!
+  width: Float
+  height: Float
+  rotation: Float
+  zIndex: Int
+}
+
+type StickyNote implements Item {
+  id: ID!
+  x: Float!
+  y: Float!
+  width: Float
+  height: Float
+  rotation: Float
+  zIndex: Int
+  text: String!
+  color: String!
+}
+
+type Project {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  board(id: ID!): Board
+  boards: [Board!]!
+}
+
+type Mutation {
+  createBoard(title: String!): Board!
+  addStickyNote(boardId: ID!, item: AddStickyNoteInput!): StickyNote!
+}
+
+input AddStickyNoteInput {
+  x: Float!
+  y: Float!
+  text: String!
+  color: String
+}
