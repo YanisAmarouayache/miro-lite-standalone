@@ -29,12 +29,11 @@ export interface WidgetTextChangeEvent {
 }
 
 @Component({
-  selector: 'app-widget-canvas',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './widget-canvas.component.html',
-  styleUrl: './widget-canvas.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-widget-canvas',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './widget-canvas.component.html',
+    styleUrl: './widget-canvas.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetCanvasComponent {
   private pendingEditableDrag?: { widgetId: string; startX: number; startY: number };

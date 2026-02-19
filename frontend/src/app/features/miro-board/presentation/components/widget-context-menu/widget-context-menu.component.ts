@@ -15,12 +15,11 @@ export interface ContextMenuActionEvent {
 }
 
 @Component({
-  selector: 'app-widget-context-menu',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './widget-context-menu.component.html',
-  styleUrl: './widget-context-menu.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-widget-context-menu',
+    imports: [CommonModule],
+    templateUrl: './widget-context-menu.component.html',
+    styleUrl: './widget-context-menu.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetContextMenuComponent {
   @Input() menu: ContextMenuState | null = null;

@@ -9,13 +9,12 @@ import { ResizeDirection, WidgetCanvasComponent, WidgetMouseEvent, WidgetResizeE
 import { WidgetInteractionService } from './services/widget-interaction.service';
 
 @Component({
-  selector: 'miro-board',
-  standalone: true,
-  imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
-  providers: [MiroBoardFacade, WidgetInteractionService],
-  templateUrl: './miro-board.component.html',
-  styleUrl: './miro-board.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'miro-board',
+    imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
+    providers: [MiroBoardFacade, WidgetInteractionService],
+    templateUrl: './miro-board.component.html',
+    styleUrl: './miro-board.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MiroBoardComponent implements OnChanges, OnDestroy {
   @ViewChild('canvasRef') private canvasRef?: WidgetCanvasComponent;

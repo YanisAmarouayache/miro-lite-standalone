@@ -7,12 +7,11 @@ import { WidgetDefinition } from '../../../domain/widget-definition.model';
 export type WidgetPanelAction = 'send_to_back' | 'send_backward' | 'bring_forward' | 'bring_to_front' | 'remove';
 
 @Component({
-  selector: 'app-widget-config-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './widget-config-panel.component.html',
-  styleUrl: './widget-config-panel.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-widget-config-panel',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './widget-config-panel.component.html',
+    styleUrl: './widget-config-panel.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetConfigPanelComponent {
   @Input({ required: true }) selectedWidget?: WidgetModel;

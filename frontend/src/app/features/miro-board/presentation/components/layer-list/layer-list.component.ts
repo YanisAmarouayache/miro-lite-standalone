@@ -9,12 +9,11 @@ export interface LayerListContextMenuEvent {
 }
 
 @Component({
-  selector: 'app-layer-list',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './layer-list.component.html',
-  styleUrl: './layer-list.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-layer-list',
+    imports: [CommonModule],
+    templateUrl: './layer-list.component.html',
+    styleUrl: './layer-list.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LayerListComponent {
   @Input({ required: true }) widgets: WidgetModel[] = [];
