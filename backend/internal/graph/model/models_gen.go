@@ -21,17 +21,13 @@ type AddStickyNoteInput struct {
 }
 
 type Board struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Items []Item `json:"items"`
+	ID      string `json:"id"`
+	Title   string `json:"title"`
+	Version int    `json:"version"`
+	Items   []Item `json:"items"`
 }
 
 type Mutation struct {
-}
-
-type Project struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
 }
 
 type Query struct {
@@ -57,3 +53,13 @@ func (this StickyNote) GetWidth() *float64    { return this.Width }
 func (this StickyNote) GetHeight() *float64   { return this.Height }
 func (this StickyNote) GetRotation() *float64 { return this.Rotation }
 func (this StickyNote) GetZIndex() *int       { return this.ZIndex }
+
+type WidgetInput struct {
+	ID         string  `json:"id"`
+	Type       string  `json:"type"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Width      float64 `json:"width"`
+	Height     float64 `json:"height"`
+	ConfigJSON string  `json:"configJson"`
+}

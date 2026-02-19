@@ -8,8 +8,7 @@ model:
   filename: internal/graph/model/models_gen.go
 
 resolver:
-  layout: follow-schema
+  layout: single-file
   dir: internal/graph
   package: graph
-  filename_template: "{name}.resolvers.go"
   filename: resolvers.go

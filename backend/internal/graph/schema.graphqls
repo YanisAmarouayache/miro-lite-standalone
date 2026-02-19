@@ -1,6 +1,7 @@
 type Board {
   id: ID!
   title: String!
+  version: Int!
   items: [Item!]!
 }
 
@@ -26,19 +27,25 @@ type StickyNote implements Item {
   color: String!
 }
 
-type Project {
-  id: ID!
-  name: String!
-}
-
 type Query {
   board(id: ID!): Board
   boards: [Board!]!
 }
 
+input WidgetInput {
+  id: ID!
+  type: String!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  configJson: String! # config sérialisé en JSON string
+}
+
 type Mutation {
   createBoard(title: String!): Board!
   addStickyNote(boardId: ID!, item: AddStickyNoteInput!): StickyNote!
+  saveBoard(boardId: ID!, version: Int!, widgets: [WidgetInput!]!): Board!
 }
 
 input AddStickyNoteInput {
