@@ -1,21 +1,16 @@
 import { Injectable, inject } from "@angular/core";
 import {
   BehaviorSubject,
-  EMPTY,
   Observable,
   Subscription,
   Subject,
-  catchError,
   concatMap,
   debounceTime,
   filter,
-  mapTo,
   of,
-  switchMap,
   takeUntil,
-  tap,
 } from "rxjs";
-import { BoardModel, WidgetModel } from "../domain/board.model";
+import { BoardModel } from "../domain/board.model";
 import { WidgetDefinition } from "../domain/widget-definition.model";
 import {
   BOARD_REPOSITORY,
@@ -25,12 +20,17 @@ import {
   WIDGET_CATALOG,
   WidgetCatalogPort,
 } from "../domain/ports/widget-catalog.port";
+import { WidgetCommandService } from "./services/widget-command.service";
+import { ImageUploadPolicyService } from "./services/image-upload-policy.service";
+import { BoardSyncService } from "./services/board-sync.service";
 
 @Injectable()
 export class WhiteboardFacade {
-  private static readonly MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
   private readonly repo = inject<BoardRepositoryPort>(BOARD_REPOSITORY);
   private readonly widgetCatalog = inject<WidgetCatalogPort>(WIDGET_CATALOG);
+  private readonly widgetCommands = inject(WidgetCommandService);
+  private readonly imageUploadPolicy = inject(ImageUploadPolicyService);
+  private readonly boardSync = inject(BoardSyncService);
   private readonly destroy$ = new Subject<void>();
   private readonly saveRequests$ = new Subject<BoardModel>();
   private readonly boardSubject = new BehaviorSubject<BoardModel>({
@@ -74,59 +74,26 @@ export class WhiteboardFacade {
     height: number
   ): void {
     const board = this.boardSubject.value;
-    this.patch({
-      ...board,
-      widgets: board.widgets.map((w) =>
-        w.id === id ? { ...w, x, y, width, height } : w
-      ),
-    });
+    this.patch(this.widgetCommands.setWidgetFrame(board, id, x, y, width, height));
   }
 
   addWidget(type: string): void {
     const definition = this.widgetCatalog.get(type);
     if (!definition) return;
     const board = this.boardSubject.value;
-    const widget: WidgetModel = {
-      id: crypto.randomUUID(),
-      type: definition.type,
-      x: 120 + board.widgets.length * 20,
-      y: 120 + board.widgets.length * 20,
-      width: definition.defaultWidth,
-      height: definition.defaultHeight,
-      config: { ...definition.defaultConfig },
-    };
-    this.patch({ ...board, widgets: [...board.widgets, widget] });
+    this.patch(this.widgetCommands.addWidget(board, definition));
   }
 
   addWidgetAt(type: string, x: number, y: number): void {
     const definition = this.widgetCatalog.get(type);
     if (!definition) return;
     const board = this.boardSubject.value;
-    const widget: WidgetModel = {
-      id: crypto.randomUUID(),
-      type: definition.type,
-      x: Math.max(0, x - definition.defaultWidth / 2),
-      y: Math.max(0, y - definition.defaultHeight / 2),
-      width: definition.defaultWidth,
-      height: definition.defaultHeight,
-      config: { ...definition.defaultConfig },
-    };
-    this.patch({ ...board, widgets: [...board.widgets, widget] });
+    this.patch(this.widgetCommands.addWidgetAt(board, definition, x, y));
   }
 
   updateConfig(id: string, partialConfig: Record<string, unknown>): void {
     const board = this.boardSubject.value;
-    this.patch({
-      ...board,
-      widgets: board.widgets.map((w) =>
-        w.id === id
-          ? {
-              ...w,
-              config: { ...(w.config ?? {}), ...partialConfig },
-            }
-          : w
-      ),
-    });
+    this.patch(this.widgetCommands.updateConfig(board, id, partialConfig));
   }
 
   updateWidgetText(id: string, text: string): void {
@@ -147,37 +114,27 @@ export class WhiteboardFacade {
   }
 
   updateImageFromFile(id: string, file: File): void {
-    if (!file.type.startsWith("image/")) {
-      this.saveErrorSubject.next("Invalid file type. Please upload an image.");
+    const validationError = this.imageUploadPolicy.validate(file);
+    if (validationError) {
+      this.saveErrorSubject.next(validationError);
       return;
     }
-    if (file.size > WhiteboardFacade.MAX_IMAGE_SIZE_BYTES) {
-      this.saveErrorSubject.next(
-        "Image too large. Maximum supported size is  " +
-          WhiteboardFacade.MAX_IMAGE_SIZE_BYTES / (1024 * 1024) +
-          " MB."
-      );
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const src = reader.result;
-      if (typeof src !== "string") return;
-      this.saveErrorSubject.next(null);
-      this.updateConfig(id, { src, alt: file.name });
-    };
-    reader.onerror = () => {
-      this.saveErrorSubject.next("Failed to read image file.");
-    };
-    reader.readAsDataURL(file);
+    this.imageUploadPolicy
+      .readAsDataUrl(file)
+      .then((src) => {
+        this.saveErrorSubject.next(null);
+        this.updateConfig(id, { src, alt: file.name });
+      })
+      .catch((error) => {
+        this.saveErrorSubject.next(
+          this.boardSync.errorMessage(error, "Failed to read image file.")
+        );
+      });
   }
 
   remove(id: string): void {
     const board = this.boardSubject.value;
-    this.patch({
-      ...board,
-      widgets: board.widgets.filter((w) => w.id !== id),
-    });
+    this.patch(this.widgetCommands.remove(board, id));
   }
 
   bringForward(id: string): void {
@@ -190,37 +147,17 @@ export class WhiteboardFacade {
 
   bringToFront(id: string): void {
     const board = this.boardSubject.value;
-    const index = board.widgets.findIndex((widget) => widget.id === id);
-    if (index < 0 || index === board.widgets.length - 1) return;
-    const next = [...board.widgets];
-    const [widget] = next.splice(index, 1);
-    next.push(widget);
-    this.patch({ ...board, widgets: next });
+    this.patch(this.widgetCommands.bringToFront(board, id));
   }
 
   sendToBack(id: string): void {
     const board = this.boardSubject.value;
-    const index = board.widgets.findIndex((widget) => widget.id === id);
-    if (index <= 0) return;
-    const next = [...board.widgets];
-    const [widget] = next.splice(index, 1);
-    next.unshift(widget);
-    this.patch({ ...board, widgets: next });
+    this.patch(this.widgetCommands.sendToBack(board, id));
   }
 
   moveWidgetAbove(sourceId: string, targetId: string): void {
-    if (sourceId === targetId) return;
     const board = this.boardSubject.value;
-    const sourceIndex = board.widgets.findIndex((widget) => widget.id === sourceId);
-    const targetIndex = board.widgets.findIndex((widget) => widget.id === targetId);
-    if (sourceIndex < 0 || targetIndex < 0) return;
-
-    const next = [...board.widgets];
-    const [source] = next.splice(sourceIndex, 1);
-    const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    const insertIndex = Math.min(next.length, adjustedTargetIndex + 1);
-    next.splice(insertIndex, 0, source);
-    this.patch({ ...board, widgets: next });
+    this.patch(this.widgetCommands.moveWidgetAbove(board, sourceId, targetId));
   }
 
   destroy(): void {
@@ -246,7 +183,7 @@ export class WhiteboardFacade {
 
   private loadBoard(boardId: string): void {
     const requestId = ++this.loadRequestId;
-    this.repo.load(boardId).subscribe({
+    this.boardSync.loadBoard(this.repo, boardId).subscribe({
       next: (board) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
@@ -262,7 +199,7 @@ export class WhiteboardFacade {
         this.isCurrentBoardLoaded = false;
         this.boardReadySubject.next(false);
         this.loadErrorSubject.next(
-          this.errorMessage(err, "Unable to load board")
+          this.boardSync.errorMessage(err, "Unable to load board")
         );
       },
     });
@@ -276,7 +213,7 @@ export class WhiteboardFacade {
 
   private startBoardSubscription(boardId: string): void {
     this.boardSubscription?.unsubscribe();
-    this.boardSubscription = this.repo.subscribe(boardId).subscribe({
+    this.boardSubscription = this.boardSync.subscribeBoard(this.repo, boardId).subscribe({
       next: (incomingBoard) => {
         if (boardId !== this.currentBoardId) return;
         const current = this.boardSubject.value;
@@ -289,7 +226,7 @@ export class WhiteboardFacade {
       error: (err) => {
         if (boardId !== this.currentBoardId) return;
         this.loadErrorSubject.next(
-          this.errorMessage(err, "Realtime connection error")
+          this.boardSync.errorMessage(err, "Realtime connection error")
         );
       },
     });
@@ -297,15 +234,7 @@ export class WhiteboardFacade {
 
   private reorder(id: string, direction: 1 | -1): void {
     const board = this.boardSubject.value;
-    const index = board.widgets.findIndex((widget) => widget.id === id);
-    if (index < 0) return;
-    const target = index + direction;
-    if (target < 0 || target >= board.widgets.length) return;
-
-    const next = [...board.widgets];
-    const [moved] = next.splice(index, 1);
-    next.splice(target, 0, moved);
-    this.patch({ ...board, widgets: next });
+    this.patch(this.widgetCommands.reorder(board, id, direction));
   }
 
   private persistWithLastWriteWins(): Observable<void> {
@@ -313,69 +242,15 @@ export class WhiteboardFacade {
     if (!this.isCurrentBoardLoaded || localBoard.id !== this.currentBoardId) {
       return of(void 0);
     }
-    return this.repo.save(localBoard).pipe(
-      tap((serverVersion) => {
+    return this.boardSync.persistWithLastWriteWins(
+      this.repo,
+      localBoard,
+      () => this.boardSubject.value,
+      (version) => {
         const current = this.boardSubject.value;
-        if (current.id === localBoard.id) {
-          this.boardSubject.next({
-            ...current,
-            version: Math.max(current.version, serverVersion),
-          });
-        }
-        this.saveErrorSubject.next(null);
-      }),
-      mapTo(void 0),
-      catchError((e) => {
-        if (e?.status !== 409) {
-          this.saveErrorSubject.next(this.errorMessage(e, "Save failed"));
-          return EMPTY;
-        }
-        return this.retrySaveWithLatestServerVersion(localBoard.id);
-      })
-    );
-  }
-
-  private retrySaveWithLatestServerVersion(boardId: string): Observable<void> {
-    return this.repo.load(boardId).pipe(
-      switchMap((serverBoard) => {
-        const latestLocal = this.boardSubject.value;
-        if (latestLocal.id !== boardId) {
-          return of(void 0);
-        }
-        return this.repo
-          .save({
-            ...latestLocal,
-            version: serverBoard.version,
-          })
-          .pipe(
-            tap((savedVersion) => {
-              const current = this.boardSubject.value;
-              if (current.id !== boardId) return;
-              this.boardSubject.next({
-                ...current,
-                version: Math.max(current.version, savedVersion),
-              });
-              this.saveErrorSubject.next(null);
-            }),
-            mapTo(void 0)
-          );
-      }),
-      catchError((retryError) => {
-        this.saveErrorSubject.next(
-          this.errorMessage(retryError, "Save failed after conflict retry")
-        );
-        return EMPTY;
-      })
-    );
-  }
-
-  private errorMessage(error: unknown, fallback: string): string {
-    const asAny = error as any;
-    return (
-      asAny?.message ||
-      asAny?.error?.message ||
-      asAny?.networkError?.result?.errors?.[0]?.message ||
-      fallback
+        this.boardSubject.next({ ...current, version });
+      },
+      (message) => this.saveErrorSubject.next(message)
     );
   }
 }
