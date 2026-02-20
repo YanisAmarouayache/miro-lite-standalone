@@ -33,12 +33,17 @@ export class WhiteboardFacade {
   private autosaveStarted = false;
   private currentBoardId = "";
   private loadRequestId = 0;
+  private readonly loadErrorSubject = new BehaviorSubject<string | null>(null);
+  private readonly saveErrorSubject = new BehaviorSubject<string | null>(null);
 
   readonly board$ = this.boardSubject.asObservable();
+  readonly loadError$ = this.loadErrorSubject.asObservable();
+  readonly saveError$ = this.saveErrorSubject.asObservable();
   readonly availableWidgets: WidgetDefinition[] = this.widgetCatalog.list();
 
   init(boardId: string): void {
     this.currentBoardId = boardId;
+    this.loadErrorSubject.next(null);
     this.startAutosaveIfNeeded();
     this.loadBoard(boardId);
   }
@@ -178,12 +183,13 @@ export class WhiteboardFacade {
       next: (board) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
+        this.loadErrorSubject.next(null);
         this.boardSubject.next(board);
       },
-      error: () => {
+      error: (err) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
-        this.boardSubject.next({ id: boardId, version: 1, widgets: [] });
+        this.loadErrorSubject.next(this.errorMessage(err, "Unable to load board"));
       },
     });
   }
@@ -214,10 +220,11 @@ export class WhiteboardFacade {
         if (current.id === localBoard.id) {
           this.boardSubject.next({ ...current, version: current.version + 1 });
         }
+        this.saveErrorSubject.next(null);
       }),
       catchError((e) => {
         if (e?.status !== 409) {
-          console.error("save failed", e);
+          this.saveErrorSubject.next(this.errorMessage(e, "Save failed"));
           return EMPTY;
         }
         return this.retrySaveWithLatestServerVersion(localBoard.id);
@@ -245,14 +252,27 @@ export class WhiteboardFacade {
                 ...current,
                 version: serverBoard.version + 1,
               });
+              this.saveErrorSubject.next(null);
             }),
             mapTo(void 0)
           );
       }),
       catchError((retryError) => {
-        console.error("save failed after conflict retry", retryError);
+        this.saveErrorSubject.next(
+          this.errorMessage(retryError, "Save failed after conflict retry")
+        );
         return EMPTY;
       })
+    );
+  }
+
+  private errorMessage(error: unknown, fallback: string): string {
+    const asAny = error as any;
+    return (
+      asAny?.message ||
+      asAny?.error?.message ||
+      asAny?.networkError?.result?.errors?.[0]?.message ||
+      fallback
     );
   }
 }

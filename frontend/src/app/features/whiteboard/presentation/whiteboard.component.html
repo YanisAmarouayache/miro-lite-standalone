@@ -10,6 +10,12 @@
       </button>
     </div>
   </header>
+  <p class="error-banner" *ngIf="loadError$ | async as loadError">
+    Load error: {{ loadError }}
+  </p>
+  <p class="error-banner" *ngIf="saveError$ | async as saveError">
+    Save error: {{ saveError }}
+  </p>
 
   <div class="board-layout">
     <app-widget-canvas

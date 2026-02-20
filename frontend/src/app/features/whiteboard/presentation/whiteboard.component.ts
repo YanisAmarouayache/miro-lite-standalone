@@ -22,6 +22,8 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   private readonly facade = inject(WhiteboardFacade);
   private readonly interaction = inject(WidgetInteractionService);
   readonly board$ = this.facade.board$;
+  readonly loadError$ = this.facade.loadError$;
+  readonly saveError$ = this.facade.saveError$;
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   private selectedWidgetId: string | null = null;

@@ -9,6 +9,12 @@ import { WhiteboardComponent } from "./whiteboard.component";
   standalone: true,
   imports: [WhiteboardComponent],
   template: `<whiteboard [boardId]="boardId()"></whiteboard>`,
+  styles: `
+    :host {
+      display: block;
+      height: 100vh;
+    }
+  `,
 })
 export class WhiteboardPageComponent {
   private readonly route = inject(ActivatedRoute);
