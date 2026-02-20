@@ -7,8 +7,8 @@ import {
   createHttpLink,
 } from "@apollo/client/core";
 import { provideRouter } from "@angular/router";
-import { BoardGraphqlRepository } from "./app/features/miro-board/infrastructure/board-graphql.repository";
-import { BOARD_REPOSITORY } from "./app/features/miro-board/domain/ports/board-repository.port";
+import { BoardGraphqlRepository } from "./app/features/whiteboard/infrastructure/board-graphql.repository";
+import { BOARD_REPOSITORY } from "./app/features/whiteboard/domain/ports/board-repository.port";
 import { environment } from "./environments/environment";
 import { AppComponent } from "./app/app.component";
 import { appRoutes } from "./app/app.routes";

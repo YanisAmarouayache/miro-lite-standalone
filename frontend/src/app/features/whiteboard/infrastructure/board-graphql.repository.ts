@@ -30,6 +30,10 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
             widgets: board?.widgets?.map(payloadToWidget) ?? [],
           };
         }),
+        catchError((err) => {
+          const message = extractGraphqlMessage(err) ?? "GraphQL load failed";
+          return throwError(() => new Error(message));
+        })
       );
   }
 
@@ -46,12 +50,29 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
       .pipe(
         map(() => void 0),
         catchError((err) => {
-          const msg = err?.graphQLErrors?.[0]?.message ?? "";
-          if (msg.includes("version conflict")) {
+          const msg = extractGraphqlMessage(err) ?? "";
+          if (isVersionConflictError(err, msg)) {
             return throwError(() => ({ status: 409, message: msg }));
           }
           return throwError(() => err);
         })
       );
   }
+}
+
+function extractGraphqlMessage(err: unknown): string | undefined {
+  const asAny = err as any;
+  return (
+    asAny?.graphQLErrors?.[0]?.message ||
+    asAny?.errors?.[0]?.message ||
+    asAny?.networkError?.result?.errors?.[0]?.message ||
+    asAny?.message
+  );
+}
+
+function isVersionConflictError(err: unknown, message: string): boolean {
+  if (message.toLowerCase().includes("version conflict")) return true;
+  const asAny = err as any;
+  const networkStatus = asAny?.networkError?.statusCode;
+  return networkStatus === 409;
 }

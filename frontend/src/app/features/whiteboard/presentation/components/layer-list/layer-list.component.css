@@ -11,20 +11,20 @@
   align-items: center;
   text-align: left;
   font-size: 12px;
-  border: 1px solid var(--miro-border);
+  border: 1px solid var(--whiteboard-border);
   border-radius: 6px;
-  background: var(--miro-surface);
-  color: var(--miro-text);
+  background: var(--whiteboard-surface);
+  color: var(--whiteboard-text);
   padding: 7px 9px;
   transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 
 .layer-item:hover {
-  border-color: var(--miro-accent);
-  background: var(--miro-surface-soft);
+  border-color: var(--whiteboard-accent);
+  background: var(--whiteboard-surface-soft);
 }
 
 .layer-item-selected {
-  border-color: var(--miro-accent);
-  box-shadow: 0 0 0 2px var(--miro-accent-soft);
+  border-color: var(--whiteboard-accent);
+  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
 }

@@ -2,15 +2,15 @@ import { Component, inject } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { map } from "rxjs";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { MiroBoardComponent } from "./miro-board.component";
+import { WhiteboardComponent } from "./whiteboard.component";
 
 @Component({
-  selector: "miro-board-page",
+  selector: "whiteboard-page",
   standalone: true,
-  imports: [MiroBoardComponent],
-  template: `<miro-board [boardId]="boardId()"></miro-board>`,
+  imports: [WhiteboardComponent],
+  template: `<whiteboard [boardId]="boardId()"></whiteboard>`,
 })
-export class MiroBoardPageComponent {
+export class WhiteboardPageComponent {
   private readonly route = inject(ActivatedRoute);
   readonly boardId = toSignal(
     this.route.paramMap.pipe(

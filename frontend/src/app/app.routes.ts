@@ -10,7 +10,7 @@ export const appRoutes: Routes = [
     path: "boards/:boardId",
     loadComponent: () =>
       import(
-        "./features/miro-board/presentation/miro-board-page.component"
-      ).then((m) => m.MiroBoardPageComponent),
+        "./features/whiteboard/presentation/whiteboard-page.component"
+      ).then((m) => m.WhiteboardPageComponent),
   },
 ];

@@ -7,7 +7,7 @@
 .canvas {
   position: relative;
   background:
-    linear-gradient(var(--miro-surface), var(--miro-surface)) padding-box,
+    linear-gradient(var(--whiteboard-surface), var(--whiteboard-surface)) padding-box,
     linear-gradient(transparent 23px, rgba(89, 110, 154, 0.08) 24px),
     linear-gradient(90deg, transparent 23px, rgba(89, 110, 154, 0.08) 24px);
   background-size: 100% 100%, 24px 24px, 24px 24px;
@@ -38,7 +38,7 @@
   position: absolute;
   box-sizing: border-box;
   border: 1px solid transparent;
-  background: var(--miro-surface);
+  background: var(--whiteboard-surface);
   border-radius: 0;
   padding: 10px;
   display: grid;
@@ -52,8 +52,8 @@
 }
 
 .widget-selected {
-  border-color: var(--miro-accent);
-  box-shadow: 0 0 0 2px var(--miro-accent-soft);
+  border-color: var(--whiteboard-accent);
+  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
 }
 
 .widget-selected:not(.widget-textual) {
@@ -115,7 +115,7 @@
 }
 
 .inline-textarea-editor {
-  background: var(--miro-surface);
+  background: var(--whiteboard-surface);
   overflow: hidden;
   scrollbar-width: none;
 }
@@ -174,7 +174,7 @@ button {
   height: 12px;
   border-radius: 999px;
   border: 1px solid rgba(89, 110, 154, 0.4);
-  background: var(--miro-surface);
+  background: var(--whiteboard-surface);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 

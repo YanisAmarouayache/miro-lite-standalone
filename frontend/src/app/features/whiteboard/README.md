@@ -1,4 +1,4 @@
-# MiroBoardComponent (standalone)
+# WhiteboardComponent (standalone)
 
 Composant Angular standalone, intégrable dans une app existante.
 

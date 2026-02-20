@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
-import { MiroBoardFacade } from '../application/miro-board.facade';
+import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
 import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
 import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
@@ -9,17 +9,17 @@ import { ResizeDirection, WidgetCanvasComponent, WidgetMouseEvent, WidgetResizeE
 import { WidgetInteractionService } from './services/widget-interaction.service';
 
 @Component({
-    selector: 'miro-board',
+    selector: 'whiteboard',
     imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
-    providers: [MiroBoardFacade, WidgetInteractionService],
-    templateUrl: './miro-board.component.html',
-    styleUrl: './miro-board.component.css',
+    providers: [WhiteboardFacade, WidgetInteractionService],
+    templateUrl: './whiteboard.component.html',
+    styleUrl: './whiteboard.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MiroBoardComponent implements OnChanges, OnDestroy {
+export class WhiteboardComponent implements OnChanges, OnDestroy {
   @ViewChild('canvasRef') private canvasRef?: WidgetCanvasComponent;
   @Input({ required: true }) boardId!: string;
-  private readonly facade = inject(MiroBoardFacade);
+  private readonly facade = inject(WhiteboardFacade);
   private readonly interaction = inject(WidgetInteractionService);
   readonly board$ = this.facade.board$;
   readonly availableWidgets = this.facade.availableWidgets;

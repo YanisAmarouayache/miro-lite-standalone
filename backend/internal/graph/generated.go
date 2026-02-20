@@ -38,7 +38,6 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Board struct {
 		ID      func(childComplexity int) int
-		Items   func(childComplexity int) int
 		Title   func(childComplexity int) int
 		Version func(childComplexity int) int
 		Widgets func(childComplexity int) int
@@ -108,12 +107,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Board.ID(childComplexity), true
-	case "Board.items":
-		if e.ComplexityRoot.Board.Items == nil {
-			break
-		}
-
-		return e.ComplexityRoot.Board.Items(childComplexity), true
 	case "Board.title":
 		if e.ComplexityRoot.Board.Title == nil {
 			break
@@ -596,35 +589,6 @@ func (ec *executionContext) fieldContext_Board_version(_ context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Board_items(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Board_items,
-		func(ctx context.Context) (any, error) {
-			return obj.Items, nil
-		},
-		nil,
-		ec.marshalNItem2ᚕmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐItemᚄ,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Board_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Board",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("FieldContext.Child cannot be called on type INTERFACE")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Board_widgets(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -701,8 +665,6 @@ func (ec *executionContext) fieldContext_Mutation_createBoard(ctx context.Contex
 				return ec.fieldContext_Board_title(ctx, field)
 			case "version":
 				return ec.fieldContext_Board_version(ctx, field)
-			case "items":
-				return ec.fieldContext_Board_items(ctx, field)
 			case "widgets":
 				return ec.fieldContext_Board_widgets(ctx, field)
 			}
@@ -815,8 +777,6 @@ func (ec *executionContext) fieldContext_Mutation_saveBoard(ctx context.Context,
 				return ec.fieldContext_Board_title(ctx, field)
 			case "version":
 				return ec.fieldContext_Board_version(ctx, field)
-			case "items":
-				return ec.fieldContext_Board_items(ctx, field)
 			case "widgets":
 				return ec.fieldContext_Board_widgets(ctx, field)
 			}
@@ -868,8 +828,6 @@ func (ec *executionContext) fieldContext_Query_board(ctx context.Context, field 
 				return ec.fieldContext_Board_title(ctx, field)
 			case "version":
 				return ec.fieldContext_Board_version(ctx, field)
-			case "items":
-				return ec.fieldContext_Board_items(ctx, field)
 			case "widgets":
 				return ec.fieldContext_Board_widgets(ctx, field)
 			}
@@ -920,8 +878,6 @@ func (ec *executionContext) fieldContext_Query_boards(_ context.Context, field g
 				return ec.fieldContext_Board_title(ctx, field)
 			case "version":
 				return ec.fieldContext_Board_version(ctx, field)
-			case "items":
-				return ec.fieldContext_Board_items(ctx, field)
 			case "widgets":
 				return ec.fieldContext_Board_widgets(ctx, field)
 			}
@@ -3068,26 +3024,6 @@ func (ec *executionContext) unmarshalInputWidgetInput(ctx context.Context, obj a
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _Item(ctx context.Context, sel ast.SelectionSet, obj model.Item) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.StickyNote:
-		return ec._StickyNote(ctx, sel, &obj)
-	case *model.StickyNote:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._StickyNote(ctx, sel, obj)
-	default:
-		if typedObj, ok := obj.(graphql.Marshaler); ok {
-			return typedObj
-		} else {
-			panic(fmt.Errorf("unexpected type %T; non-generated variants of Item must implement graphql.Marshaler", obj))
-		}
-	}
-}
-
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -3115,11 +3051,6 @@ func (ec *executionContext) _Board(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "version":
 			out.Values[i] = ec._Board_version(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "items":
-			out.Values[i] = ec._Board_items(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3305,7 +3236,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var stickyNoteImplementors = []string{"StickyNote", "Item"}
+var stickyNoteImplementors = []string{"StickyNote"}
 
 func (ec *executionContext) _StickyNote(ctx context.Context, sel ast.SelectionSet, obj *model.StickyNote) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, stickyNoteImplementors)
@@ -3873,32 +3804,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNItem2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐItem(ctx context.Context, sel ast.SelectionSet, v model.Item) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Item(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNItem2ᚕmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐItemᚄ(ctx context.Context, sel ast.SelectionSet, v []model.Item) graphql.Marshaler {
-	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
-		fc := graphql.GetFieldContext(ctx)
-		fc.Result = &v[i]
-		return ec.marshalNItem2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐItem(ctx, sel, v[i])
-	})
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
 }
 
 func (ec *executionContext) marshalNStickyNote2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐStickyNote(ctx context.Context, sel ast.SelectionSet, v model.StickyNote) graphql.Marshaler {

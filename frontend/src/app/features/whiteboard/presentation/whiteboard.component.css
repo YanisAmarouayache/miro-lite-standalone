@@ -1,8 +1,8 @@
-.miro-board-shell {
+.whiteboard-shell {
   height: 100vh;
   display: grid;
   grid-template-rows: 56px 1fr;
-  color: var(--miro-text);
+  color: var(--whiteboard-text);
 }
 
 .toolbar {
@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--miro-border);
+  border-bottom: 1px solid var(--whiteboard-border);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(4px);
 }
@@ -23,19 +23,19 @@
 }
 
 .toolbar-actions button {
-  border: 1px solid var(--miro-border-strong);
+  border: 1px solid var(--whiteboard-border-strong);
   border-radius: 6px;
-  background: var(--miro-surface);
-  color: var(--miro-text);
+  background: var(--whiteboard-surface);
+  color: var(--whiteboard-text);
   padding: 6px 10px;
   cursor: pointer;
   transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
 }
 
 .toolbar-actions button:hover {
-  border-color: var(--miro-accent);
-  box-shadow: 0 0 0 2px var(--miro-accent-soft);
-  background: var(--miro-surface-soft);
+  border-color: var(--whiteboard-accent);
+  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
+  background: var(--whiteboard-surface-soft);
 }
 
 .board-layout {
@@ -50,8 +50,8 @@ app-widget-canvas {
 }
 
 .side-panel {
-  border-left: 1px solid var(--miro-border);
-  background: var(--miro-surface-soft);
+  border-left: 1px solid var(--whiteboard-border);
+  background: var(--whiteboard-surface-soft);
   padding: 12px;
   display: grid;
   align-content: start;

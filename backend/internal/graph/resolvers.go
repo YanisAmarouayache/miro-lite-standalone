@@ -92,37 +92,15 @@ func (r *mutationResolver) SaveBoard(ctx context.Context, boardID string, versio
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func boardToGraphQL(b *board.Model) *model.Board {
-	items := make([]model.Item, 0, len(b.Widgets))
 	widgets := make([]*model.WidgetPayload, 0, len(b.Widgets))
 	for _, w := range b.Widgets {
-		if item := widgetToItem(w); item != nil {
-			items = append(items, item)
-		}
 		widgets = append(widgets, widgetToPayload(w))
 	}
 	return &model.Board{
 		ID:      b.ID,
 		Title:   b.Title,
 		Version: b.Version,
-		Items:   items,
 		Widgets: widgets,
-	}
-}
-
-func widgetToItem(w board.Widget) model.Item {
-	text, _ := w.Config["text"].(string)
-	color, _ := w.Config["color"].(string)
-	if color == "" {
-		color = "yellow"
-	}
-	return &model.StickyNote{
-		ID:     w.ID,
-		X:      w.X,
-		Y:      w.Y,
-		Width:  &w.Width,
-		Height: &w.Height,
-		Text:   text,
-		Color:  color,
 	}
 }
 

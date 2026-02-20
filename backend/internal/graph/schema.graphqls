@@ -2,21 +2,10 @@ type Board {
   id: ID!
   title: String!
   version: Int!
-  items: [Item!]!
   widgets: [WidgetPayload!]!
 }
 
-interface Item {
-  id: ID!
-  x: Float!
-  y: Float!
-  width: Float
-  height: Float
-  rotation: Float
-  zIndex: Int
-}
-
-type StickyNote implements Item {
+type StickyNote {
   id: ID!
   x: Float!
   y: Float!

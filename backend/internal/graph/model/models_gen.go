@@ -2,17 +2,6 @@
 
 package model
 
-type Item interface {
-	IsItem()
-	GetID() string
-	GetX() float64
-	GetY() float64
-	GetWidth() *float64
-	GetHeight() *float64
-	GetRotation() *float64
-	GetZIndex() *int
-}
-
 type AddStickyNoteInput struct {
 	X     float64 `json:"x"`
 	Y     float64 `json:"y"`
@@ -24,7 +13,6 @@ type Board struct {
 	ID      string           `json:"id"`
 	Title   string           `json:"title"`
 	Version int              `json:"version"`
-	Items   []Item           `json:"items"`
 	Widgets []*WidgetPayload `json:"widgets"`
 }
 
@@ -45,15 +33,6 @@ type StickyNote struct {
 	Text     string   `json:"text"`
 	Color    string   `json:"color"`
 }
-
-func (StickyNote) IsItem()                    {}
-func (this StickyNote) GetID() string         { return this.ID }
-func (this StickyNote) GetX() float64         { return this.X }
-func (this StickyNote) GetY() float64         { return this.Y }
-func (this StickyNote) GetWidth() *float64    { return this.Width }
-func (this StickyNote) GetHeight() *float64   { return this.Height }
-func (this StickyNote) GetRotation() *float64 { return this.Rotation }
-func (this StickyNote) GetZIndex() *int       { return this.ZIndex }
 
 type WidgetInput struct {
 	ID         string  `json:"id"`

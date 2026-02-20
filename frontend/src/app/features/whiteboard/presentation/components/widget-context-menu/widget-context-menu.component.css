@@ -2,8 +2,8 @@
   position: fixed;
   z-index: 40;
   min-width: 170px;
-  background: var(--miro-surface);
-  border: 1px solid var(--miro-border);
+  background: var(--whiteboard-surface);
+  border: 1px solid var(--whiteboard-border);
   border-radius: 10px;
   box-shadow: 0 14px 28px rgba(22, 33, 56, 0.16);
   padding: 6px;
@@ -16,14 +16,14 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--miro-text);
+  color: var(--whiteboard-text);
   padding: 8px 10px;
 }
 
 .context-menu button:hover {
-  background: var(--miro-surface-soft);
+  background: var(--whiteboard-surface-soft);
 }
 
 .context-menu .danger-action {
-  color: var(--miro-danger);
+  color: var(--whiteboard-danger);
 }

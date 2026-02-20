@@ -20,7 +20,7 @@ import { WidgetDefinition } from "../domain/widget-definition.model";
 import { BOARD_REPOSITORY, BoardRepositoryPort } from "../domain/ports/board-repository.port";
 
 @Injectable()
-export class MiroBoardFacade {
+export class WhiteboardFacade {
   private readonly repo = inject<BoardRepositoryPort>(BOARD_REPOSITORY);
   private readonly widgetCatalog = inject(WidgetCatalogRepository);
   private readonly destroy$ = new Subject<void>();
