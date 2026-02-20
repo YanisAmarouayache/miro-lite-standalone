@@ -3,37 +3,37 @@
   <p class="selected-title">{{ widgetName(selected.type) }}</p>
   <p class="layer-label">Layer {{ layerPosition }} / {{ widgetCount }}</p>
   <div class="layer-actions">
-    <button type="button" (click)="action.emit('send_to_back')">Tout derrière</button>
-    <button type="button" (click)="action.emit('send_backward')">Arrière</button>
-    <button type="button" (click)="action.emit('bring_forward')">Avant</button>
-    <button type="button" (click)="action.emit('bring_to_front')">Tout devant</button>
+    <button type="button" [disabled]="!editable" (click)="action.emit('send_to_back')">Tout derrière</button>
+    <button type="button" [disabled]="!editable" (click)="action.emit('send_backward')">Arrière</button>
+    <button type="button" [disabled]="!editable" (click)="action.emit('bring_forward')">Avant</button>
+    <button type="button" [disabled]="!editable" (click)="action.emit('bring_to_front')">Tout devant</button>
   </div>
-  <button type="button" (click)="action.emit('remove')">Supprimer</button>
+  <button type="button" [disabled]="!editable" (click)="action.emit('remove')">Supprimer</button>
 
   <label *ngIf="selected.type === 'text' || selected.type === 'textarea'" class="control-row">
     Texte
-    <textarea [ngModel]="textValue(selected)" (ngModelChange)="updateText.emit($event)"></textarea>
+    <textarea [readonly]="!editable" [ngModel]="textValue(selected)" (ngModelChange)="updateText.emit($event)"></textarea>
   </label>
 
   <label *ngIf="selected.type === 'chart'" class="control-row">
     Type
-    <select [ngModel]="chartType(selected)" (ngModelChange)="updateChartType.emit($event)">
+    <select [disabled]="!editable" [ngModel]="chartType(selected)" (ngModelChange)="updateChartType.emit($event)">
       <option *ngFor="let type of chartTypes" [value]="type">{{ type }}</option>
     </select>
   </label>
 
   <label *ngIf="selected.type === 'counter'" class="control-row">
     Label
-    <input type="text" [ngModel]="counterLabel(selected)" (ngModelChange)="updateCounterLabel.emit($event)" />
+    <input type="text" [readonly]="!editable" [ngModel]="counterLabel(selected)" (ngModelChange)="updateCounterLabel.emit($event)" />
   </label>
   <label *ngIf="selected.type === 'counter'" class="control-row">
     Value
-    <input type="number" [ngModel]="counterValue(selected)" (ngModelChange)="updateCounterValue.emit($event)" />
+    <input type="number" [readonly]="!editable" [ngModel]="counterValue(selected)" (ngModelChange)="updateCounterValue.emit($event)" />
   </label>
 
   <label *ngIf="selected.type === 'image'" class="control-row">
     Import image
-    <input type="file" accept="image/*" (change)="onImageFileChange($event)" />
+    <input type="file" [disabled]="!editable" accept="image/*" (change)="onImageFileChange($event)" />
   </label>
 </ng-container>
 <ng-template #noSelection>

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
 import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
@@ -24,6 +25,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   readonly board$ = this.facade.board$;
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
+  readonly boardReady = toSignal(this.facade.boardReady$, { initialValue: false });
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   private selectedWidgetId: string | null = null;
@@ -51,6 +53,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   addWidget(type: string): void {
+    if (!this.boardReady()) return;
     this.facade.addWidget(type);
   }
 
@@ -79,22 +82,27 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   updateText(id: string, text: string): void {
+    if (!this.boardReady()) return;
     this.facade.updateWidgetText(id, text);
   }
 
   updateChartType(id: string, chartType: string): void {
+    if (!this.boardReady()) return;
     this.facade.updateChartType(id, chartType);
   }
 
   updateCounterValue(id: string, value: string): void {
+    if (!this.boardReady()) return;
     this.facade.updateCounterValue(id, value);
   }
 
   updateCounterLabel(id: string, label: string): void {
+    if (!this.boardReady()) return;
     this.facade.updateCounterLabel(id, label);
   }
 
   updateImageFromFile(id: string, file: File): void {
+    if (!this.boardReady()) return;
     this.facade.updateImageFromFile(id, file);
   }
 
@@ -114,6 +122,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   remove(id: string): void {
+    if (!this.boardReady()) return;
     this.facade.remove(id);
     this.clearContextMenu();
     if (this.selectedWidgetId === id) {
@@ -128,6 +137,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   openWidgetContextMenu(widgetId: string, event: MouseEvent): void {
+    if (!this.boardReady()) return;
     event.preventDefault();
     event.stopPropagation();
     this.selectedWidgetId = widgetId;
@@ -163,6 +173,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   onContextMenuAction(event: ContextMenuActionEvent): void {
+    if (!this.boardReady()) return;
     switch (event.action) {
       case 'bring_to_front':
         this.facade.bringToFront(event.widgetId);
@@ -184,6 +195,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   startDrag(widget: WidgetModel, event: MouseEvent): void {
+    if (!this.boardReady()) return;
     this.selectedWidgetId = widget.id;
     this.interaction.startDrag(widget, event);
   }
@@ -195,6 +207,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   onStartResizeRequest(event: WidgetResizeEvent): void {
+    if (!this.boardReady()) return;
     this.startResize(event.widget, event.direction, event.event);
   }
 

@@ -45,6 +45,7 @@ export class WidgetCanvasComponent {
   @Input({ required: true }) frameOverrides: ReadonlyMap<string, WidgetFrame> = new Map();
   @Input() selectedWidgetId: string | null = null;
   @Input() zoom = 1;
+  @Input() editable = true;
   @Input() zoomIndicatorVisible = false;
   @Input() zoomIndicatorX = 0;
   @Input() zoomIndicatorY = 0;
@@ -117,10 +118,12 @@ export class WidgetCanvasComponent {
   }
 
   onWidgetContextMenu(widgetId: string, event: MouseEvent): void {
+    if (!this.editable) return;
     this.openWidgetContextMenu.emit({ widgetId, event });
   }
 
   requestDrag(widgetId: string, event: MouseEvent): void {
+    if (!this.editable) return;
     if (event.button !== 0) return;
     if (!this.isSelected(widgetId)) return;
     const target = event.target as HTMLElement | null;
@@ -130,6 +133,7 @@ export class WidgetCanvasComponent {
   }
 
   onEditableMouseDown(widgetId: string, event: MouseEvent): void {
+    if (!this.editable) return;
     if (event.button !== 0) return;
     if (!this.isSelected(widgetId)) return;
     this.pendingEditableDrag = {
@@ -141,6 +145,7 @@ export class WidgetCanvasComponent {
 
   @HostListener('document:mousemove', ['$event'])
   onDocumentMouseMove(event: MouseEvent): void {
+    if (!this.editable) return;
     if (!this.pendingEditableDrag) return;
     if ((event.buttons & 1) === 0) {
       this.pendingEditableDrag = undefined;
@@ -159,6 +164,15 @@ export class WidgetCanvasComponent {
   @HostListener('document:mouseup')
   onDocumentMouseUp(): void {
     this.pendingEditableDrag = undefined;
+  }
+
+  requestResize(
+    widget: WidgetModel,
+    direction: ResizeDirection,
+    event: MouseEvent
+  ): void {
+    if (!this.editable) return;
+    this.startResize.emit({ widget, direction, event });
   }
 
   getCanvasElement(): HTMLDivElement | undefined {

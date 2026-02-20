@@ -2,7 +2,7 @@
   "demo-board": {
     "id": "demo-board",
     "title": "",
-    "version": 44,
+    "version": 47,
     "widgets": [
       {
         "id": "cbc2df35-a2c3-4acb-be1b-2204afffc463",
@@ -48,6 +48,17 @@
         "height": 200,
         "config": {
           "text": "Maxence le boss"
+        }
+      },
+      {
+        "id": "5ed3a52b-1579-480b-9e22-ed40fcf69421",
+        "type": "chart",
+        "x": 468,
+        "y": 175,
+        "width": 135,
+        "height": 97,
+        "config": {
+          "chartType": "pie"
         }
       }
     ]

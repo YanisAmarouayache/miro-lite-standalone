@@ -19,6 +19,7 @@ export class WidgetConfigPanelComponent {
   @Input({ required: true }) layerPosition = 0;
   @Input() chartTypes: string[] = [];
   @Input() definitions: WidgetDefinition[] = [];
+  @Input() editable = true;
 
   @Output() action = new EventEmitter<WidgetPanelAction>();
   @Output() updateText = new EventEmitter<string>();
@@ -53,6 +54,7 @@ export class WidgetConfigPanelComponent {
   }
 
   onImageFileChange(event: Event): void {
+    if (!this.editable) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;

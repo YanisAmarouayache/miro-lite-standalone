@@ -5,11 +5,19 @@
       <button type="button" (click)="zoomOut()">-</button>
       <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
       <button type="button" (click)="zoomIn()">+</button>
-      <button type="button" *ngFor="let definition of availableWidgets" (click)="addWidget(definition.type)">
+      <button
+        type="button"
+        *ngFor="let definition of availableWidgets"
+        [disabled]="!boardReady()"
+        (click)="addWidget(definition.type)"
+      >
         + {{ definition.name }}
       </button>
     </div>
   </header>
+  <p class="error-banner" *ngIf="!boardReady()">
+    Board is read-only until data is loaded.
+  </p>
   <p class="error-banner" *ngIf="loadError$ | async as loadError">
     Load error: {{ loadError }}
   </p>
@@ -24,6 +32,7 @@
       [frameOverrides]="frameOverrides"
       [selectedWidgetId]="selectedWidget(board)?.id ?? null"
       [zoom]="zoom"
+      [editable]="boardReady()"
       [zoomIndicatorVisible]="zoomIndicatorVisible"
       [zoomIndicatorX]="zoomIndicatorX"
       [zoomIndicatorY]="zoomIndicatorY"
@@ -53,6 +62,7 @@
           [layerPosition]="selectedLayerPosition(board, selected.id)"
           [chartTypes]="chartTypes"
           [definitions]="availableWidgets"
+          [editable]="boardReady()"
           (action)="onContextMenuAction({ widgetId: selected.id, action: $event })"
           (updateText)="updateText(selected.id, $event)"
           (updateChartType)="updateChartType(selected.id, $event)"
@@ -67,6 +77,7 @@
           [layerPosition]="0"
           [chartTypes]="chartTypes"
           [definitions]="availableWidgets"
+          [editable]="boardReady()"
         ></app-widget-config-panel>
       </ng-template>
     </aside>

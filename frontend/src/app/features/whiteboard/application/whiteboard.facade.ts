@@ -33,17 +33,24 @@ export class WhiteboardFacade {
   private autosaveStarted = false;
   private currentBoardId = "";
   private loadRequestId = 0;
+  private isCurrentBoardLoaded = false;
   private readonly loadErrorSubject = new BehaviorSubject<string | null>(null);
   private readonly saveErrorSubject = new BehaviorSubject<string | null>(null);
+  private readonly boardReadySubject = new BehaviorSubject<boolean>(false);
 
   readonly board$ = this.boardSubject.asObservable();
   readonly loadError$ = this.loadErrorSubject.asObservable();
   readonly saveError$ = this.saveErrorSubject.asObservable();
+  readonly boardReady$ = this.boardReadySubject.asObservable();
   readonly availableWidgets: WidgetDefinition[] = this.widgetCatalog.list();
 
   init(boardId: string): void {
     this.currentBoardId = boardId;
+    this.isCurrentBoardLoaded = false;
+    this.boardReadySubject.next(false);
+    this.boardSubject.next({ id: boardId, version: 1, widgets: [] });
     this.loadErrorSubject.next(null);
+    this.saveErrorSubject.next(null);
     this.startAutosaveIfNeeded();
     this.loadBoard(boardId);
   }
@@ -183,12 +190,16 @@ export class WhiteboardFacade {
       next: (board) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
+        this.isCurrentBoardLoaded = true;
+        this.boardReadySubject.next(true);
         this.loadErrorSubject.next(null);
         this.boardSubject.next(board);
       },
       error: (err) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
+        this.isCurrentBoardLoaded = false;
+        this.boardReadySubject.next(false);
         this.loadErrorSubject.next(this.errorMessage(err, "Unable to load board"));
       },
     });
@@ -196,6 +207,7 @@ export class WhiteboardFacade {
 
   private patch(next: BoardModel): void {
     this.boardSubject.next(next);
+    if (!this.isCurrentBoardLoaded || next.id !== this.currentBoardId) return;
     this.saveRequests$.next(next);
   }
 
@@ -214,6 +226,9 @@ export class WhiteboardFacade {
 
   private persistWithLastWriteWins(): Observable<void> {
     const localBoard = this.boardSubject.value;
+    if (!this.isCurrentBoardLoaded || localBoard.id !== this.currentBoardId) {
+      return of(void 0);
+    }
     return this.repo.save(localBoard).pipe(
       tap(() => {
         const current = this.boardSubject.value;

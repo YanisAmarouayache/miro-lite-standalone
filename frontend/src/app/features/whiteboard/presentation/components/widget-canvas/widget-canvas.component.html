@@ -47,6 +47,7 @@
           *ngSwitchCase="'text'"
           class="inline-yellow-editor"
           [ngModel]="textValue(w)"
+          [readonly]="!editable"
           (mousedown)="onEditableMouseDown(w.id, $event)"
           (ngModelChange)="updateText.emit({ widgetId: w.id, text: $event })"
         ></textarea>
@@ -54,6 +55,7 @@
           *ngSwitchCase="'textarea'"
           class="inline-textarea-editor"
           [ngModel]="textValue(w)"
+          [readonly]="!editable"
           (mousedown)="onEditableMouseDown(w.id, $event)"
           (ngModelChange)="updateText.emit({ widgetId: w.id, text: $event })"
         ></textarea>
@@ -73,14 +75,14 @@
         </div>
       </div>
 
-      <button type="button" class="resize-handle resize-n" (mousedown)="startResize.emit({ widget: w, direction: 'n', event: $event })"></button>
-      <button type="button" class="resize-handle resize-s" (mousedown)="startResize.emit({ widget: w, direction: 's', event: $event })"></button>
-      <button type="button" class="resize-handle resize-e" (mousedown)="startResize.emit({ widget: w, direction: 'e', event: $event })"></button>
-      <button type="button" class="resize-handle resize-w" (mousedown)="startResize.emit({ widget: w, direction: 'w', event: $event })"></button>
-      <button type="button" class="resize-handle resize-ne" (mousedown)="startResize.emit({ widget: w, direction: 'ne', event: $event })"></button>
-      <button type="button" class="resize-handle resize-nw" (mousedown)="startResize.emit({ widget: w, direction: 'nw', event: $event })"></button>
-      <button type="button" class="resize-handle resize-se" (mousedown)="startResize.emit({ widget: w, direction: 'se', event: $event })"></button>
-      <button type="button" class="resize-handle resize-sw" (mousedown)="startResize.emit({ widget: w, direction: 'sw', event: $event })"></button>
+      <button type="button" class="resize-handle resize-n" [disabled]="!editable" (mousedown)="requestResize(w, 'n', $event)"></button>
+      <button type="button" class="resize-handle resize-s" [disabled]="!editable" (mousedown)="requestResize(w, 's', $event)"></button>
+      <button type="button" class="resize-handle resize-e" [disabled]="!editable" (mousedown)="requestResize(w, 'e', $event)"></button>
+      <button type="button" class="resize-handle resize-w" [disabled]="!editable" (mousedown)="requestResize(w, 'w', $event)"></button>
+      <button type="button" class="resize-handle resize-ne" [disabled]="!editable" (mousedown)="requestResize(w, 'ne', $event)"></button>
+      <button type="button" class="resize-handle resize-nw" [disabled]="!editable" (mousedown)="requestResize(w, 'nw', $event)"></button>
+      <button type="button" class="resize-handle resize-se" [disabled]="!editable" (mousedown)="requestResize(w, 'se', $event)"></button>
+      <button type="button" class="resize-handle resize-sw" [disabled]="!editable" (mousedown)="requestResize(w, 'sw', $event)"></button>
     </article>
   </div>
 </div>
