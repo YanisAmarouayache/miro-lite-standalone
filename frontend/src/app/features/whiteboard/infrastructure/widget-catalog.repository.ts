@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { getDefaultWidgetConfig } from "../domain/board.model";
 import { WidgetDefinition } from '../domain/widget-definition.model';
 import { WidgetCatalogPort } from "../domain/ports/widget-catalog.port";
 
@@ -8,42 +9,42 @@ export class WidgetCatalogRepository implements WidgetCatalogPort {
     {
       type: 'chart',
       name: 'Chart',
-      defaultConfig: { chartType: 'pie' },
+      defaultConfig: getDefaultWidgetConfig("chart"),
       defaultWidth: 320,
       defaultHeight: 240
     },
     {
       type: 'table',
       name: 'Table',
-      defaultConfig: { rows: [] },
+      defaultConfig: getDefaultWidgetConfig("table"),
       defaultWidth: 360,
       defaultHeight: 220
     },
     {
       type: 'counter',
       name: 'Counter',
-      defaultConfig: { value: 0, label: 'Metric' },
+      defaultConfig: getDefaultWidgetConfig("counter"),
       defaultWidth: 220,
       defaultHeight: 140
     },
     {
       type: 'text',
       name: 'Yellow Box',
-      defaultConfig: { text: 'Yellow box' },
+      defaultConfig: getDefaultWidgetConfig("text"),
       defaultWidth: 240,
       defaultHeight: 160
     },
     {
       type: 'image',
       name: 'Image',
-      defaultConfig: { src: '', alt: 'Imported image' },
+      defaultConfig: getDefaultWidgetConfig("image"),
       defaultWidth: 300,
       defaultHeight: 220
     },
     {
       type: 'textarea',
       name: 'Textarea',
-      defaultConfig: { text: '' },
+      defaultConfig: getDefaultWidgetConfig("textarea"),
       defaultWidth: 320,
       defaultHeight: 200
     }

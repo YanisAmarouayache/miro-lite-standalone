@@ -13,17 +13,6 @@ import { BoardRepositoryPort } from "../../domain/ports/board-repository.port";
 
 @Injectable({ providedIn: "root" })
 export class BoardSyncService {
-  loadBoard(repo: BoardRepositoryPort, boardId: string): Observable<BoardModel> {
-    return repo.load(boardId);
-  }
-
-  subscribeBoard(
-    repo: BoardRepositoryPort,
-    boardId: string
-  ): Observable<BoardModel> {
-    return repo.subscribe(boardId);
-  }
-
   persistWithLastWriteWins(
     repo: BoardRepositoryPort,
     localBoard: BoardModel,

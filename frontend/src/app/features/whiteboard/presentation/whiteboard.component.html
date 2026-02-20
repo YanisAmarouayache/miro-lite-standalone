@@ -1,6 +1,6 @@
-<section class="whiteboard-shell" *ngIf="board$ | async as board">
+<section class="whiteboard-shell" *ngIf="viewModel$ | async as viewModel">
   <header class="toolbar">
-    <h3>Board: {{ board.id }}</h3>
+    <h3>Board: {{ viewModel.board.id }}</h3>
     <div class="toolbar-actions">
       <button type="button" (click)="zoomOut()">-</button>
       <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
@@ -8,16 +8,16 @@
       <button
         type="button"
         *ngFor="let definition of availableWidgets"
-        [disabled]="!boardReady()"
+        [disabled]="!viewModel.editable"
         draggable="true"
-        (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, boardReady())"
-        (click)="ui.addWidget(definition.type, boardReady())"
+        (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
+        (click)="ui.addWidget(definition.type, viewModel.editable)"
       >
         + {{ definition.name }}
       </button>
     </div>
   </header>
-  <p class="error-banner" *ngIf="!boardReady()">
+  <p class="error-banner" *ngIf="!viewModel.editable">
     Board is read-only until data is loaded.
   </p>
   <p class="error-banner" *ngIf="loadError$ | async as loadError">
@@ -30,11 +30,11 @@
   <div class="board-layout">
     <app-widget-canvas
       #canvasRef
-      [widgets]="board.widgets"
+      [widgets]="viewModel.board.widgets"
       [frameOverrides]="frameOverrides"
-      [selectedWidgetId]="selectedWidget()?.id ?? null"
+      [selectedWidgetId]="viewModel.selectedWidget?.id ?? null"
       [zoom]="zoom"
-      [editable]="boardReady()"
+      [editable]="viewModel.editable"
       [zoomIndicatorVisible]="zoomIndicatorVisible"
       [zoomIndicatorX]="zoomIndicatorX"
       [zoomIndicatorY]="zoomIndicatorY"
@@ -42,50 +42,50 @@
       (canvasWheel)="onCanvasWheel($event)"
       (canvasContextMenu)="ui.closeContextMenu($event)"
       (selectWidget)="ui.selectWidget($event)"
-      (openWidgetContextMenu)="ui.openContextMenu($event.widgetId, $event.event, boardReady())"
-      (startDrag)="ui.onStartDragRequest($event, board.widgets, boardReady())"
-      (startResize)="ui.onStartResizeRequest($event, boardReady())"
-      (updateText)="ui.onWidgetTextChange($event, boardReady())"
-      (widgetDrop)="ui.onWidgetDrop($event, canvasRef.getCanvasElement(), zoom, boardReady())"
+      (openWidgetContextMenu)="ui.openContextMenu($event.widgetId, $event.event, viewModel.editable)"
+      (startDrag)="ui.onStartDragRequest($event, viewModel.board.widgets, viewModel.editable)"
+      (startResize)="ui.onStartResizeRequest($event, viewModel.editable)"
+      (updateText)="ui.onWidgetTextChange($event, viewModel.editable)"
+      (widgetDrop)="ui.onWidgetDrop($event, canvasRef.getCanvasElement(), zoom, viewModel.editable)"
     ></app-widget-canvas>
 
     <aside class="side-panel">
       <app-layer-list
-        [widgets]="board.widgets"
-        [selectedWidgetId]="selectedWidget()?.id ?? null"
+        [widgets]="viewModel.board.widgets"
+        [selectedWidgetId]="viewModel.selectedWidget?.id ?? null"
         [definitions]="availableWidgets"
         (selectWidget)="ui.selectWidget($event)"
-        (openContextMenu)="ui.openContextMenu($event.widgetId, $event.event, boardReady())"
-        (reorderLayer)="ui.onLayerReorder($event, boardReady())"
+        (openContextMenu)="ui.openContextMenu($event.widgetId, $event.event, viewModel.editable)"
+        (reorderLayer)="ui.onLayerReorder($event, viewModel.editable)"
       ></app-layer-list>
 
-      <ng-container *ngIf="selectedWidget() as selected; else noSelectedWidget">
+      <ng-container *ngIf="viewModel.selectedWidget as selected; else noSelectedWidget">
         <app-widget-config-panel
           [selectedWidget]="selected"
-          [widgetCount]="board.widgets.length"
-          [layerPosition]="selectedLayerPosition(board, selected.id)"
+          [widgetCount]="viewModel.board.widgets.length"
+          [layerPosition]="selectedLayerPosition(viewModel.board.widgets, selected.id)"
           [chartTypes]="chartTypes"
           [definitions]="availableWidgets"
-          [editable]="boardReady()"
-          (action)="ui.onContextMenuAction({ widgetId: selected.id, action: $event }, boardReady())"
-          (updateText)="ui.onWidgetTextChange({ widgetId: selected.id, text: $event }, boardReady())"
-          (updateChartType)="ui.updateChartType(selected.id, $event, boardReady())"
-          (updateCounterLabel)="ui.updateCounterLabel(selected.id, $event, boardReady())"
-          (updateCounterValue)="ui.updateCounterValue(selected.id, $event, boardReady())"
-          (imageSelected)="ui.updateImageFromFile(selected.id, $event, boardReady())"
+          [editable]="viewModel.editable"
+          (action)="ui.onContextMenuAction({ widgetId: selected.id, action: $event }, viewModel.editable)"
+          (updateText)="ui.onWidgetTextChange({ widgetId: selected.id, text: $event }, viewModel.editable)"
+          (updateChartType)="ui.updateChartType(selected.id, $event, viewModel.editable)"
+          (updateCounterLabel)="ui.updateCounterLabel(selected.id, $event, viewModel.editable)"
+          (updateCounterValue)="ui.updateCounterValue(selected.id, $event, viewModel.editable)"
+          (imageSelected)="ui.updateImageFromFile(selected.id, $event, viewModel.editable)"
         ></app-widget-config-panel>
       </ng-container>
       <ng-template #noSelectedWidget>
         <app-widget-config-panel
-          [widgetCount]="board.widgets.length"
+          [widgetCount]="viewModel.board.widgets.length"
           [layerPosition]="0"
           [chartTypes]="chartTypes"
           [definitions]="availableWidgets"
-          [editable]="boardReady()"
+          [editable]="viewModel.editable"
         ></app-widget-config-panel>
       </ng-template>
     </aside>
   </div>
 
-  <app-widget-context-menu [menu]="contextMenu" (action)="ui.onContextMenuAction($event, boardReady())"></app-widget-context-menu>
+  <app-widget-context-menu [menu]="contextMenu" (action)="ui.onContextMenuAction($event, viewModel.editable)"></app-widget-context-menu>
 </section>

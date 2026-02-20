@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
@@ -32,21 +31,21 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   private readonly zoomState = inject(WhiteboardZoomService);
   private readonly contextMenuState = inject(WidgetContextMenuService);
   readonly ui = inject(WhiteboardUiService);
-  readonly board$ = this.facade.board$;
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
-  readonly boardReady = toSignal(this.facade.boardReady$, { initialValue: false });
-  readonly selectedWidget = toSignal(
-    combineLatest([
-      this.facade.board$,
-      this.interaction.selectedWidgetId$
-    ]).pipe(
-      map(([board, selectedWidgetId]) => {
-        if (!selectedWidgetId) return undefined;
-        return board.widgets.find((widget) => widget.id === selectedWidgetId);
-      })
-    ),
-    { initialValue: undefined }
+  readonly viewModel$ = combineLatest([
+    this.facade.board$,
+    this.facade.boardReady$,
+    this.interaction.selectedWidgetId$,
+  ]).pipe(
+    map(([board, editable, selectedWidgetId]) => ({
+      board,
+      editable,
+      selectedWidget:
+        selectedWidgetId
+          ? board.widgets.find((widget) => widget.id === selectedWidgetId)
+          : undefined,
+    }))
   );
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
@@ -99,8 +98,8 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
   }
 
-  selectedLayerPosition(board: { widgets: WidgetModel[] }, widgetId: string): number {
-    const index = board.widgets.findIndex((widget) => widget.id === widgetId);
+  selectedLayerPosition(widgets: WidgetModel[], widgetId: string): number {
+    const index = widgets.findIndex((widget) => widget.id === widgetId);
     return index + 1;
   }
 

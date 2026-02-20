@@ -183,7 +183,7 @@ export class WhiteboardFacade {
 
   private loadBoard(boardId: string): void {
     const requestId = ++this.loadRequestId;
-    this.boardSync.loadBoard(this.repo, boardId).subscribe({
+    this.repo.load(boardId).subscribe({
       next: (board) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
           return;
@@ -213,7 +213,7 @@ export class WhiteboardFacade {
 
   private startBoardSubscription(boardId: string): void {
     this.boardSubscription?.unsubscribe();
-    this.boardSubscription = this.boardSync.subscribeBoard(this.repo, boardId).subscribe({
+    this.boardSubscription = this.repo.subscribe(boardId).subscribe({
       next: (incomingBoard) => {
         if (boardId !== this.currentBoardId) return;
         const current = this.boardSubject.value;
