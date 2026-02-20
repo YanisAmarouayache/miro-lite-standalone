@@ -50,7 +50,7 @@ export class WidgetCatalogRepository implements WidgetCatalogPort {
   ];
 
   list(): WidgetDefinition[] {
-    return this.definitions;
+    return [...this.definitions];
   }
 
   get(type: string): WidgetDefinition | undefined {
