@@ -152,6 +152,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
     this.selectedWidgetId = widgetId;
+    this.interaction.setSelectedWidgetId(widgetId);
     const menuWidth = 180;
     const menuHeight = 220;
     const x = Math.min(event.clientX, window.innerWidth - menuWidth - 8);
@@ -208,6 +209,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   startDrag(widget: WidgetModel, event: MouseEvent): void {
     if (!this.boardReady()) return;
     this.selectedWidgetId = widget.id;
+    this.interaction.setSelectedWidgetId(widget.id);
     this.interaction.startDrag(widget, event);
   }
 
@@ -224,6 +226,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   startResize(widget: WidgetModel, direction: ResizeDirection, event: MouseEvent): void {
     this.selectedWidgetId = widget.id;
+    this.interaction.setSelectedWidgetId(widget.id);
     this.interaction.startResize(widget, direction, event);
   }
 
