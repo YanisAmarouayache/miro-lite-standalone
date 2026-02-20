@@ -17,10 +17,14 @@ import {
 import { BoardModel, WidgetModel } from "../domain/board.model";
 import { WidgetCatalogRepository } from "../infrastructure/widget-catalog.repository";
 import { WidgetDefinition } from "../domain/widget-definition.model";
-import { BOARD_REPOSITORY, BoardRepositoryPort } from "../domain/ports/board-repository.port";
+import {
+  BOARD_REPOSITORY,
+  BoardRepositoryPort,
+} from "../domain/ports/board-repository.port";
 
 @Injectable()
 export class WhiteboardFacade {
+  private static readonly MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
   private readonly repo = inject<BoardRepositoryPort>(BOARD_REPOSITORY);
   private readonly widgetCatalog = inject(WidgetCatalogRepository);
   private readonly destroy$ = new Subject<void>();
@@ -120,11 +124,27 @@ export class WhiteboardFacade {
   }
 
   updateImageFromFile(id: string, file: File): void {
+    if (!file.type.startsWith("image/")) {
+      this.saveErrorSubject.next("Invalid file type. Please upload an image.");
+      return;
+    }
+    if (file.size > WhiteboardFacade.MAX_IMAGE_SIZE_BYTES) {
+      this.saveErrorSubject.next(
+        "Image too large. Maximum supported size is  " +
+          WhiteboardFacade.MAX_IMAGE_SIZE_BYTES / (1024 * 1024) +
+          " MB."
+      );
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result;
       if (typeof src !== "string") return;
+      this.saveErrorSubject.next(null);
       this.updateConfig(id, { src, alt: file.name });
+    };
+    reader.onerror = () => {
+      this.saveErrorSubject.next("Failed to read image file.");
     };
     reader.readAsDataURL(file);
   }
@@ -200,7 +220,9 @@ export class WhiteboardFacade {
           return;
         this.isCurrentBoardLoaded = false;
         this.boardReadySubject.next(false);
-        this.loadErrorSubject.next(this.errorMessage(err, "Unable to load board"));
+        this.loadErrorSubject.next(
+          this.errorMessage(err, "Unable to load board")
+        );
       },
     });
   }

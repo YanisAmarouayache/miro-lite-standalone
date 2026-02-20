@@ -45,6 +45,7 @@ func main() {
 
 func withCORS(next http.Handler) http.Handler {
 	allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
+	allowedHeaders := parseAllowedHeaders(os.Getenv("ALLOWED_HEADERS"))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
@@ -54,7 +55,7 @@ func withCORS(next http.Handler) http.Handler {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 		}
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
 		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,OPTIONS")
 
 		if r.Method == http.MethodOptions {
@@ -98,4 +99,29 @@ func parseAllowedOrigins(raw string) map[string]bool {
 		origins[origin] = true
 	}
 	return origins
+}
+
+func parseAllowedHeaders(raw string) string {
+	if strings.TrimSpace(raw) == "" {
+		return "Content-Type,Authorization,Apollo-Require-Preflight,X-Requested-With,Accept,Origin"
+	}
+
+	headers := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, value := range strings.Split(raw, ",") {
+		header := strings.TrimSpace(value)
+		if header == "" {
+			continue
+		}
+		key := strings.ToLower(header)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		headers = append(headers, header)
+	}
+	if len(headers) == 0 {
+		return "Content-Type,Authorization,Apollo-Require-Preflight,X-Requested-With,Accept,Origin"
+	}
+	return strings.Join(headers, ",")
 }
