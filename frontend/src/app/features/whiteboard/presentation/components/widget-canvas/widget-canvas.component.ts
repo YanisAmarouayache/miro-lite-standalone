@@ -97,33 +97,45 @@ export class WidgetCanvasComponent {
   }
 
   textValue(widget: WidgetModel): string {
-    const value = widget.config?.['text'];
-    return typeof value === 'string' ? value : '';
+    if (widget.type === "text" || widget.type === "textarea") {
+      return widget.config.text;
+    }
+    return '';
   }
 
   chartType(widget: WidgetModel): string {
-    const value = widget.config?.['chartType'];
-    return typeof value === 'string' ? value : 'pie';
+    if (widget.type === "chart") {
+      return widget.config.chartType;
+    }
+    return 'pie';
   }
 
   imageSrc(widget: WidgetModel): string {
-    const value = widget.config?.['src'];
-    return typeof value === 'string' ? value : '';
+    if (widget.type === "image") {
+      return widget.config.src;
+    }
+    return '';
   }
 
   imageAlt(widget: WidgetModel): string {
-    const value = widget.config?.['alt'];
-    return typeof value === 'string' ? value : 'Imported image';
+    if (widget.type === "image") {
+      return widget.config.alt;
+    }
+    return 'Imported image';
   }
 
   counterValue(widget: WidgetModel): number {
-    const value = widget.config?.['value'];
-    return typeof value === 'number' ? value : 0;
+    if (widget.type === "counter") {
+      return widget.config.value;
+    }
+    return 0;
   }
 
   counterLabel(widget: WidgetModel): string {
-    const value = widget.config?.['label'];
-    return typeof value === 'string' ? value : 'Metric';
+    if (widget.type === "counter") {
+      return widget.config.label;
+    }
+    return 'Metric';
   }
 
   onWidgetContextMenu(widgetId: string, event: MouseEvent): void {

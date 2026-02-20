@@ -1,19 +1,25 @@
 import { Injectable } from "@angular/core";
-import { BoardModel, WidgetModel } from "../../domain/board.model";
+import {
+  BoardModel,
+  ChartWidgetConfig,
+  CounterWidgetConfig,
+  ImageWidgetConfig,
+  TableWidgetConfig,
+  TextWidgetConfig,
+  TextareaWidgetConfig,
+  WidgetModel,
+  normalizeWidgetConfig,
+} from "../../domain/board.model";
 import { WidgetDefinition } from "../../domain/widget-definition.model";
 
 @Injectable({ providedIn: "root" })
 export class WidgetCommandService {
   addWidget(board: BoardModel, definition: WidgetDefinition): BoardModel {
-    const widget: WidgetModel = {
-      id: crypto.randomUUID(),
-      type: definition.type,
-      x: 120 + board.widgets.length * 20,
-      y: 120 + board.widgets.length * 20,
-      width: definition.defaultWidth,
-      height: definition.defaultHeight,
-      config: { ...definition.defaultConfig },
-    };
+    const widget = this.createWidget(
+      definition,
+      120 + board.widgets.length * 20,
+      120 + board.widgets.length * 20
+    );
     return { ...board, widgets: [...board.widgets, widget] };
   }
 
@@ -23,15 +29,11 @@ export class WidgetCommandService {
     x: number,
     y: number
   ): BoardModel {
-    const widget: WidgetModel = {
-      id: crypto.randomUUID(),
-      type: definition.type,
-      x: Math.max(0, x - definition.defaultWidth / 2),
-      y: Math.max(0, y - definition.defaultHeight / 2),
-      width: definition.defaultWidth,
-      height: definition.defaultHeight,
-      config: { ...definition.defaultConfig },
-    };
+    const widget = this.createWidget(
+      definition,
+      Math.max(0, x - definition.defaultWidth / 2),
+      Math.max(0, y - definition.defaultHeight / 2)
+    );
     return { ...board, widgets: [...board.widgets, widget] };
   }
 
@@ -59,12 +61,7 @@ export class WidgetCommandService {
     return {
       ...board,
       widgets: board.widgets.map((w) =>
-        w.id === id
-          ? {
-              ...w,
-              config: { ...(w.config ?? {}), ...partialConfig },
-            }
-          : w
+        w.id === id ? this.mergeWidgetConfig(w, partialConfig) : w
       ),
     };
   }
@@ -120,5 +117,62 @@ export class WidgetCommandService {
     const insertIndex = Math.min(next.length, adjustedTargetIndex + 1);
     next.splice(insertIndex, 0, source);
     return { ...board, widgets: next };
+  }
+
+  private createWidget(
+    definition: WidgetDefinition,
+    x: number,
+    y: number
+  ): WidgetModel {
+    const config = normalizeWidgetConfig(
+      definition.type,
+      definition.defaultConfig as unknown as Record<string, unknown>
+    );
+    const base = {
+      id: crypto.randomUUID(),
+      x,
+      y,
+      width: definition.defaultWidth,
+      height: definition.defaultHeight,
+    };
+    switch (definition.type) {
+      case "chart":
+        return { ...base, type: "chart", config: config as ChartWidgetConfig };
+      case "table":
+        return { ...base, type: "table", config: config as TableWidgetConfig };
+      case "counter":
+        return { ...base, type: "counter", config: config as CounterWidgetConfig };
+      case "text":
+        return { ...base, type: "text", config: config as TextWidgetConfig };
+      case "image":
+        return { ...base, type: "image", config: config as ImageWidgetConfig };
+      case "textarea":
+        return { ...base, type: "textarea", config: config as TextareaWidgetConfig };
+    }
+  }
+
+  private mergeWidgetConfig(
+    widget: WidgetModel,
+    partialConfig: Record<string, unknown>
+  ): WidgetModel {
+    const mergedConfig = normalizeWidgetConfig(widget.type, {
+      ...(widget.config as unknown as Record<string, unknown>),
+      ...partialConfig,
+    });
+
+    switch (widget.type) {
+      case "chart":
+        return { ...widget, config: mergedConfig as ChartWidgetConfig };
+      case "table":
+        return { ...widget, config: mergedConfig as TableWidgetConfig };
+      case "counter":
+        return { ...widget, config: mergedConfig as CounterWidgetConfig };
+      case "text":
+        return { ...widget, config: mergedConfig as TextWidgetConfig };
+      case "image":
+        return { ...widget, config: mergedConfig as ImageWidgetConfig };
+      case "textarea":
+        return { ...widget, config: mergedConfig as TextareaWidgetConfig };
+    }
   }
 }
