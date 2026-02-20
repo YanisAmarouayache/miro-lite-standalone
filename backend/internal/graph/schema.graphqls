@@ -1,0 +1,56 @@
+type Board {
+  id: ID!
+  title: String!
+  version: Int!
+  widgets: [WidgetPayload!]!
+}
+
+type StickyNote {
+  id: ID!
+  x: Float!
+  y: Float!
+  width: Float
+  height: Float
+  rotation: Float
+  zIndex: Int
+  text: String!
+  color: String!
+}
+
+type Query {
+  board(id: ID!): Board
+  boards: [Board!]!
+}
+
+type WidgetPayload {
+  id: ID!
+  type: String!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  configJson: String!
+}
+
+input WidgetInput {
+  id: ID!
+  type: String!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  configJson: String! # config sérialisé en JSON string
+}
+
+type Mutation {
+  createBoard(title: String!): Board!
+  addStickyNote(boardId: ID!, item: AddStickyNoteInput!): StickyNote!
+  saveBoard(boardId: ID!, version: Int!, widgets: [WidgetInput!]!): Board!
+}
+
+input AddStickyNoteInput {
+  x: Float!
+  y: Float!
+  text: String!
+  color: String
+}

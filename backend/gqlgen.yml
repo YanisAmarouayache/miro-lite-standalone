@@ -1,0 +1,14 @@
+schema:
+  - "internal/graph/schema.graphqls"
+
+exec:
+  filename: internal/graph/generated.go
+
+model:
+  filename: internal/graph/model/models_gen.go
+
+resolver:
+  layout: single-file
+  dir: internal/graph
+  package: graph
+  filename: resolvers.go

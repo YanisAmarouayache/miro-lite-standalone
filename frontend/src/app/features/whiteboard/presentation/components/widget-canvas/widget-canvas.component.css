@@ -1,0 +1,193 @@
+:host {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+}
+
+.canvas {
+  position: relative;
+  background:
+    linear-gradient(var(--whiteboard-surface), var(--whiteboard-surface)) padding-box,
+    linear-gradient(transparent 23px, rgba(89, 110, 154, 0.08) 24px),
+    linear-gradient(90deg, transparent 23px, rgba(89, 110, 154, 0.08) 24px);
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+  overflow: auto;
+  min-height: 0;
+}
+.canvas-scroll-space { pointer-events: none; }
+.canvas-surface {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+}
+
+.zoom-indicator {
+  position: fixed;
+  z-index: 20;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.widget {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  background: var(--whiteboard-surface);
+  border-radius: 0;
+  padding: 10px;
+  display: grid;
+  user-select: none;
+  overflow: visible;
+  cursor: default;
+}
+
+.widget-yellow-box {
+  background: #fef08a;
+}
+
+.widget-selected {
+  border-color: var(--whiteboard-accent);
+  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
+}
+
+.widget-selected:not(.widget-textual) {
+  cursor: grab;
+}
+
+.widget-selected:not(.widget-textual):active {
+  cursor: grabbing;
+}
+
+.drag-surface {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 2px;
+  height: 16px;
+  cursor: grab;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  border-top: 1px dashed rgba(15, 23, 42, 0.2);
+}
+
+.widget-textual .drag-surface {
+  display: none;
+}
+
+.widget:hover .drag-surface,
+.widget-selected .drag-surface {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.widget-content {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.widget-content textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  resize: none;
+  outline: none;
+  overflow: auto;
+  cursor: text;
+}
+
+.inline-yellow-editor {
+  background: transparent;
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+.inline-textarea-editor {
+  background: var(--whiteboard-surface);
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+.inline-yellow-editor::-webkit-scrollbar,
+.inline-textarea-editor::-webkit-scrollbar {
+  display: none;
+}
+
+.chart-widget,
+.counter-widget,
+.table-widget,
+.image-widget {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.image-widget {
+  height: 100%;
+  min-height: 0;
+  align-content: stretch;
+}
+
+.image-widget img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+.resize-handle {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 3;
+  touch-action: none;
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(89, 110, 154, 0.4);
+  background: var(--whiteboard-surface);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+
+.widget-selected .resize-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.resize-n { top: -10px; left: 50%; width: 20px; height: 20px; transform: translateX(-50%); cursor: ns-resize; }
+.resize-s { bottom: -10px; left: 50%; width: 20px; height: 20px; transform: translateX(-50%); cursor: ns-resize; }
+.resize-e { right: -10px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); cursor: ew-resize; }
+.resize-w { left: -10px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); cursor: ew-resize; }
+.resize-ne { top: -9px; right: -9px; width: 18px; height: 18px; cursor: nesw-resize; }
+.resize-nw { top: -9px; left: -9px; width: 18px; height: 18px; cursor: nwse-resize; }
+.resize-se { right: -9px; bottom: -9px; width: 18px; height: 18px; cursor: nwse-resize; }
+.resize-sw { left: -9px; bottom: -9px; width: 18px; height: 18px; cursor: nesw-resize; }

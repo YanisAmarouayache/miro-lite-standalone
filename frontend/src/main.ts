@@ -1,16 +1,15 @@
-import { bootstrapApplication } from '@angular/platform-browser';
-import { Component } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
-import { MiroBoardComponent } from './app/features/miro-board/presentation/miro-board.component';
-
-@Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [MiroBoardComponent],
-  template: `<miro-board [boardId]="'demo-board'"></miro-board>`
-})
-class AppComponent {}
+import { bootstrapApplication } from "@angular/platform-browser";
+import { provideHttpClient, withFetch } from "@angular/common/http";
+import { provideRouter } from "@angular/router";
+import { environment } from "./environments/environment";
+import { AppComponent } from "./app/app.component";
+import { appRoutes } from "./app/app.routes";
+import { provideWhiteboard } from "./app/features/whiteboard/whiteboard.providers";
 
 bootstrapApplication(AppComponent, {
-  providers: [provideHttpClient()]
+  providers: [
+    provideRouter(appRoutes),
+    provideHttpClient(withFetch()),
+    provideWhiteboard({ graphqlUrl: environment.graphqlUrl }),
+  ],
 }).catch((err) => console.error(err));

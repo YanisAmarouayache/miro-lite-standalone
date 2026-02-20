@@ -3,6 +3,7 @@ package board
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,6 +24,7 @@ type Widget struct {
 
 type Model struct {
 	ID      string   `json:"id"`
+	Title   string   `json:"title"`
 	Version int      `json:"version"`
 	Widgets []Widget `json:"widgets"`
 }
@@ -47,13 +49,68 @@ func NewService(storePath string) *Service {
 	return s
 }
 
+// ─── Méthodes publiques pour les resolvers GraphQL ───────────────────────────
+
+func (s *Service) GetBoard(id string) (*Model, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	b, ok := s.boards[id]
+	if !ok {
+		return nil, false
+	}
+	return &b, true
+}
+
+func (s *Service) ListBoards() []*Model {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	result := make([]*Model, 0, len(s.boards))
+	for _, b := range s.boards {
+		bCopy := b
+		result = append(result, &bCopy)
+	}
+	return result
+}
+
+func (s *Service) CreateBoard(id, title string) *Model {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b := Model{ID: id, Title: title, Version: 1, Widgets: []Widget{}}
+	s.boards[id] = b
+	_ = s.saveToDisk()
+	return &b
+}
+
+func (s *Service) AddWidget(boardID string, widget Widget) (*Widget, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b, ok := s.boards[boardID]
+	if !ok {
+		return nil, fmt.Errorf("board %s not found", boardID)
+	}
+	normalizeWidget(&widget)
+	b.Widgets = append(b.Widgets, widget)
+	s.boards[boardID] = b
+	if err := s.saveToDisk(); err != nil {
+		return nil, err
+	}
+	return &widget, nil
+}
+
+func (s *Service) Count() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.boards)
+}
+
+// ─── Handlers REST (inchangés) ────────────────────────────────────────────────
+
 func (s *Service) HandleBoard(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimPrefix(r.URL.Path, "/api/boards/")
 	if id == "" || strings.Contains(id, "/") {
 		http.Error(w, "invalid board id", http.StatusBadRequest)
 		return
 	}
-
 	switch r.Method {
 	case http.MethodGet:
 		s.handleGet(w, id)
@@ -67,7 +124,6 @@ func (s *Service) HandleBoard(w http.ResponseWriter, r *http.Request) {
 func (s *Service) handleGet(w http.ResponseWriter, id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	board, ok := s.boards[id]
 	if !ok {
 		board = Model{ID: id, Version: 1, Widgets: []Widget{}}
@@ -86,10 +142,8 @@ func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	current, ok := s.boards[id]
 	if !ok {
 		current = Model{ID: id, Version: 1, Widgets: []Widget{}}
@@ -101,7 +155,6 @@ func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
 	for i := range req.Widgets {
 		normalizeWidget(&req.Widgets[i])
 	}
-
 	next := Model{ID: id, Version: current.Version + 1, Widgets: req.Widgets}
 	s.boards[id] = next
 	if err := s.saveToDisk(); err != nil {
@@ -161,4 +214,25 @@ func normalizeWidget(widget *Widget) {
 	if widget.Type == "note" {
 		widget.Type = "text"
 	}
+}
+
+func (s *Service) SaveBoard(id string, version int, widgets []Widget) (*Model, error) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    current, ok := s.boards[id]
+    if !ok {
+        current = Model{ID: id, Version: 1, Widgets: []Widget{}}
+    }
+    if version != current.Version {
+        return nil, fmt.Errorf("version conflict: expected %d got %d", current.Version, version)
+    }
+    for i := range widgets {
+        normalizeWidget(&widgets[i])
+    }
+    next := Model{ID: id, Title: current.Title, Version: current.Version + 1, Widgets: widgets}
+    s.boards[id] = next
+    if err := s.saveToDisk(); err != nil {
+        return nil, err
+    }
+    return &next, nil
 }
