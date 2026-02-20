@@ -2,39 +2,15 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WidgetModel } from '../../../domain/board.model';
-
-export const WIDGET_TYPE_DRAG_MIME = 'application/x-whiteboard-widget-type';
-
-export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
-
-export interface WidgetFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export interface WidgetMouseEvent {
-  widgetId: string;
-  event: MouseEvent;
-}
-
-export interface WidgetResizeEvent {
-  widget: WidgetModel;
-  direction: ResizeDirection;
-  event: MouseEvent;
-}
-
-export interface WidgetTextChangeEvent {
-  widgetId: string;
-  text: string;
-}
-
-export interface WidgetDropEvent {
-  widgetType: string;
-  clientX: number;
-  clientY: number;
-}
+import {
+  ResizeDirection,
+  WidgetDropEvent,
+  WidgetFrame,
+  WidgetMouseEvent,
+  WidgetResizeEvent,
+  WidgetTextChangeEvent,
+  WIDGET_TYPE_DRAG_MIME,
+} from "../../models/widget-interaction.model";
 
 @Component({
     selector: 'app-widget-canvas',

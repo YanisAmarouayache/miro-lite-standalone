@@ -2,16 +2,10 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { WidgetModel } from '../../../domain/board.model';
 import { WidgetDefinition } from '../../../domain/widget-definition.model';
-
-export interface LayerListContextMenuEvent {
-  widgetId: string;
-  event: MouseEvent;
-}
-
-export interface LayerReorderEvent {
-  sourceWidgetId: string;
-  targetWidgetId: string;
-}
+import {
+  LayerListContextMenuEvent,
+  LayerReorderEvent,
+} from "../../models/layer-list.model";
 
 @Component({
     selector: 'app-layer-list',

@@ -1,18 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-
-export interface ContextMenuState {
-  widgetId: string;
-  x: number;
-  y: number;
-}
-
-export type ContextMenuAction = 'bring_to_front' | 'bring_forward' | 'send_backward' | 'send_to_back' | 'remove';
-
-export interface ContextMenuActionEvent {
-  widgetId: string;
-  action: ContextMenuAction;
-}
+import {
+  ContextMenuAction,
+  ContextMenuActionEvent,
+  ContextMenuState,
+} from "../../models/widget-context-menu.model";
 
 @Component({
     selector: 'app-widget-context-menu',

@@ -5,17 +5,29 @@ import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
 import {
-  LayerListContextMenuEvent,
   LayerListComponent,
-  LayerReorderEvent
 } from './components/layer-list/layer-list.component';
-import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
+import { WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
 import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
-import { WidgetCanvasComponent, WidgetDropEvent, WidgetMouseEvent, WidgetResizeEvent, WidgetTextChangeEvent } from './components/widget-canvas/widget-canvas.component';
+import { WidgetCanvasComponent } from './components/widget-canvas/widget-canvas.component';
 import { WidgetInteractionService } from './services/widget-interaction.service';
 import { WhiteboardZoomService } from './services/whiteboard-zoom.service';
 import { WidgetContextMenuService } from './services/widget-context-menu.service';
 import { WhiteboardUiService } from './services/whiteboard-ui.service';
+import {
+  WidgetDropEvent,
+  WidgetMouseEvent,
+  WidgetResizeEvent,
+  WidgetTextChangeEvent,
+} from "./models/widget-interaction.model";
+import {
+  LayerListContextMenuEvent,
+  LayerReorderEvent,
+} from "./models/layer-list.model";
+import {
+  ContextMenuActionEvent,
+  ContextMenuState,
+} from "./models/widget-context-menu.model";
 
 @Component({
     selector: 'whiteboard',

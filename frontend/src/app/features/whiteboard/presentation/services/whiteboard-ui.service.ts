@@ -8,11 +8,11 @@ import {
   WidgetResizeEvent,
   WidgetTextChangeEvent,
   WIDGET_TYPE_DRAG_MIME,
-} from "../components/widget-canvas/widget-canvas.component";
+} from "../models/widget-interaction.model";
 import {
   ContextMenuActionEvent,
-} from "../components/widget-context-menu/widget-context-menu.component";
-import { LayerReorderEvent } from "../components/layer-list/layer-list.component";
+} from "../models/widget-context-menu.model";
+import { LayerReorderEvent } from "../models/layer-list.model";
 import { WidgetInteractionService } from "./widget-interaction.service";
 import { WidgetContextMenuService } from "./widget-context-menu.service";
 

@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { ContextMenuState } from "../components/widget-context-menu/widget-context-menu.component";
+import { ContextMenuState } from "../models/widget-context-menu.model";
 
 @Injectable()
 export class WidgetContextMenuService {

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WidgetModel } from '../../domain/board.model';
-import { ResizeDirection, WidgetFrame } from '../components/widget-canvas/widget-canvas.component';
+import { ResizeDirection, WidgetFrame } from '../models/widget-interaction.model';
 
 interface InteractionState {
   widgetId: string;
