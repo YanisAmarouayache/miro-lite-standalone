@@ -4,7 +4,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
-import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
+import {
+  LayerListContextMenuEvent,
+  LayerListComponent,
+  LayerReorderEvent
+} from './components/layer-list/layer-list.component';
 import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
 import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
 import {
@@ -205,6 +209,12 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   openWidgetContextMenuFromLayer(event: LayerListContextMenuEvent): void {
     this.openWidgetContextMenu(event.widgetId, event.event);
+  }
+
+  onLayerReorder(event: LayerReorderEvent): void {
+    if (!this.boardReady()) return;
+    this.facade.moveWidgetAbove(event.sourceWidgetId, event.targetWidgetId);
+    this.selectWidget(event.sourceWidgetId);
   }
 
   onWidgetContextMenu(event: WidgetMouseEvent): void {

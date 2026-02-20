@@ -56,6 +56,7 @@
         [definitions]="availableWidgets"
         (selectWidget)="selectWidget($event)"
         (openContextMenu)="openWidgetContextMenuFromLayer($event)"
+        (reorderLayer)="onLayerReorder($event)"
       ></app-layer-list>
 
       <ng-container *ngIf="selectedWidget() as selected; else noSelectedWidget">

@@ -6,6 +6,7 @@
 }
 
 .layer-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,4 +28,36 @@
 .layer-item-selected {
   border-color: var(--whiteboard-accent);
   box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
+}
+
+.layer-item-dragging {
+  opacity: 0.6;
+}
+
+.layer-item-drop-target {
+  border-color: var(--whiteboard-accent);
+}
+
+.layer-item-drop-target::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: -5px;
+  height: 4px;
+  background: #2f6bff;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.95), 0 0 10px rgba(47, 107, 255, 0.55);
+}
+
+.layer-item-drop-target::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2f6bff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
 }

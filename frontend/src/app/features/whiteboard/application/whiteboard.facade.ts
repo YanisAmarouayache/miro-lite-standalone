@@ -201,6 +201,21 @@ export class WhiteboardFacade {
     this.patch({ ...board, widgets: next });
   }
 
+  moveWidgetAbove(sourceId: string, targetId: string): void {
+    if (sourceId === targetId) return;
+    const board = this.boardSubject.value;
+    const sourceIndex = board.widgets.findIndex((widget) => widget.id === sourceId);
+    const targetIndex = board.widgets.findIndex((widget) => widget.id === targetId);
+    if (sourceIndex < 0 || targetIndex < 0) return;
+
+    const next = [...board.widgets];
+    const [source] = next.splice(sourceIndex, 1);
+    const adjustedTargetIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    const insertIndex = Math.min(next.length, adjustedTargetIndex + 1);
+    next.splice(insertIndex, 0, source);
+    this.patch({ ...board, widgets: next });
+  }
+
   destroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

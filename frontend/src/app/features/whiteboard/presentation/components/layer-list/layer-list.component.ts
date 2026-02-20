@@ -8,6 +8,11 @@ export interface LayerListContextMenuEvent {
   event: MouseEvent;
 }
 
+export interface LayerReorderEvent {
+  sourceWidgetId: string;
+  targetWidgetId: string;
+}
+
 @Component({
     selector: 'app-layer-list',
     imports: [CommonModule],
@@ -19,9 +24,12 @@ export class LayerListComponent {
   @Input({ required: true }) widgets: WidgetModel[] = [];
   @Input() selectedWidgetId: string | null = null;
   @Input() definitions: WidgetDefinition[] = [];
+  draggingWidgetId: string | null = null;
+  dropTargetWidgetId: string | null = null;
 
   @Output() selectWidget = new EventEmitter<string>();
   @Output() openContextMenu = new EventEmitter<LayerListContextMenuEvent>();
+  @Output() reorderLayer = new EventEmitter<LayerReorderEvent>();
 
   orderedWidgets(): WidgetModel[] {
     return [...this.widgets].reverse();
@@ -51,5 +59,41 @@ export class LayerListComponent {
 
   onContextMenu(widgetId: string, event: MouseEvent): void {
     this.openContextMenu.emit({ widgetId, event });
+  }
+
+  onDragStart(widgetId: string, event: DragEvent): void {
+    this.draggingWidgetId = widgetId;
+    if (!event.dataTransfer) return;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', widgetId);
+  }
+
+  onDragOver(widgetId: string, event: DragEvent): void {
+    if (!this.draggingWidgetId || this.draggingWidgetId === widgetId) return;
+    event.preventDefault();
+    this.dropTargetWidgetId = widgetId;
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onDragEnter(widgetId: string, event: DragEvent): void {
+    if (!this.draggingWidgetId || this.draggingWidgetId === widgetId) return;
+    event.preventDefault();
+    this.dropTargetWidgetId = widgetId;
+  }
+
+  onDrop(targetWidgetId: string, event: DragEvent): void {
+    event.preventDefault();
+    const sourceWidgetId = this.draggingWidgetId || event.dataTransfer?.getData('text/plain') || null;
+    this.draggingWidgetId = null;
+    this.dropTargetWidgetId = null;
+    if (!sourceWidgetId || sourceWidgetId === targetWidgetId) return;
+    this.reorderLayer.emit({ sourceWidgetId, targetWidgetId });
+  }
+
+  onDragEnd(): void {
+    this.draggingWidgetId = null;
+    this.dropTargetWidgetId = null;
   }
 }
