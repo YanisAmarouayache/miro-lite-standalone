@@ -4,7 +4,7 @@ import { BoardModel } from "../board.model";
 
 export interface BoardRepositoryPort {
   load(boardId: string): Observable<BoardModel>;
-  save(board: BoardModel): Observable<void>;
+  save(board: BoardModel): Observable<number>;
   subscribe(boardId: string): Observable<BoardModel>;
 }
 

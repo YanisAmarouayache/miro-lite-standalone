@@ -44,9 +44,11 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
       );
   }
 
-  save(board: BoardModel): Observable<void> {
+  save(board: BoardModel): Observable<number> {
     return this.apollo
-      .mutate({
+      .mutate<{
+        saveBoard: { id: string; version: number } | null;
+      }>({
         mutation: SAVE_BOARD,
         variables: {
           boardId: board.id,
@@ -55,7 +57,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
         },
       })
       .pipe(
-        map(() => void 0),
+        map(({ data }) => data?.saveBoard?.version ?? board.version + 1),
         catchError((err) => {
           const msg = extractGraphqlMessage(err) ?? "";
           if (isVersionConflictError(err, msg)) {

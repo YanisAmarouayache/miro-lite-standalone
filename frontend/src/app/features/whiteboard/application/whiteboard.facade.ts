@@ -311,13 +311,17 @@ export class WhiteboardFacade {
       return of(void 0);
     }
     return this.repo.save(localBoard).pipe(
-      tap(() => {
+      tap((serverVersion) => {
         const current = this.boardSubject.value;
         if (current.id === localBoard.id) {
-          this.boardSubject.next({ ...current, version: current.version + 1 });
+          this.boardSubject.next({
+            ...current,
+            version: Math.max(current.version, serverVersion),
+          });
         }
         this.saveErrorSubject.next(null);
       }),
+      mapTo(void 0),
       catchError((e) => {
         if (e?.status !== 409) {
           this.saveErrorSubject.next(this.errorMessage(e, "Save failed"));
@@ -341,12 +345,12 @@ export class WhiteboardFacade {
             version: serverBoard.version,
           })
           .pipe(
-            tap(() => {
+            tap((savedVersion) => {
               const current = this.boardSubject.value;
               if (current.id !== boardId) return;
               this.boardSubject.next({
                 ...current,
-                version: serverBoard.version + 1,
+                version: Math.max(current.version, savedVersion),
               });
               this.saveErrorSubject.next(null);
             }),
