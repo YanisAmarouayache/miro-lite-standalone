@@ -22,6 +22,10 @@ type Query {
   boards: [Board!]!
 }
 
+type Subscription {
+  boardUpdated(boardId: ID!): Board!
+}
+
 type WidgetPayload {
   id: ID!
   type: String!

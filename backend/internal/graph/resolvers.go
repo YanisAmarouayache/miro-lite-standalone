@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"miro-lite-standalone/backend/internal/board"
 	"miro-lite-standalone/backend/internal/graph/model"
@@ -13,10 +14,16 @@ import (
 
 type Resolver struct {
 	BoardService *board.Service
+	mu          sync.RWMutex
+	nextSubID   int
+	subscribers map[string]map[int]chan *model.Board
 }
 
 func (r *Resolver) Query() QueryResolver       { return &queryResolver{r} }
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+func (r *Resolver) Subscription() SubscriptionResolver {
+	return &subscriptionResolver{r}
+}
 
 type queryResolver struct{ *Resolver }
 
@@ -42,6 +49,7 @@ type mutationResolver struct{ *Resolver }
 func (r *mutationResolver) CreateBoard(ctx context.Context, title string) (*model.Board, error) {
 	id := fmt.Sprintf("board-%s", uuid.NewString()[:8])
 	b := r.BoardService.CreateBoard(id, title)
+	r.publishBoardUpdated(b)
 	return boardToGraphQL(b), nil
 }
 
@@ -59,6 +67,9 @@ func (r *mutationResolver) AddStickyNote(ctx context.Context, boardID string, it
 	})
 	if err != nil {
 		return nil, err
+	}
+	if b, ok := r.BoardService.GetBoard(boardID); ok {
+		r.publishBoardUpdated(b)
 	}
 	text, _ := w.Config["text"].(string)
 	col, _ := w.Config["color"].(string)
@@ -86,7 +97,19 @@ func (r *mutationResolver) SaveBoard(ctx context.Context, boardID string, versio
 	if err != nil {
 		return nil, err
 	}
+	r.publishBoardUpdated(b)
 	return boardToGraphQL(b), nil
+}
+
+type subscriptionResolver struct{ *Resolver }
+
+func (r *subscriptionResolver) BoardUpdated(ctx context.Context, boardID string) (<-chan *model.Board, error) {
+	ch, subID := r.addSubscriber(boardID)
+	go func() {
+		<-ctx.Done()
+		r.removeSubscriber(boardID, subID)
+	}()
+	return ch, nil
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,5 +140,61 @@ func widgetToPayload(w board.Widget) *model.WidgetPayload {
 		Width:      w.Width,
 		Height:     w.Height,
 		ConfigJSON: string(rawConfig),
+	}
+}
+
+func (r *Resolver) addSubscriber(boardID string) (chan *model.Board, int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.subscribers == nil {
+		r.subscribers = make(map[string]map[int]chan *model.Board)
+	}
+	if r.subscribers[boardID] == nil {
+		r.subscribers[boardID] = make(map[int]chan *model.Board)
+	}
+	r.nextSubID++
+	subID := r.nextSubID
+	ch := make(chan *model.Board, 4)
+	r.subscribers[boardID][subID] = ch
+	return ch, subID
+}
+
+func (r *Resolver) removeSubscriber(boardID string, subID int) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	boardSubs, ok := r.subscribers[boardID]
+	if !ok {
+		return
+	}
+	ch, ok := boardSubs[subID]
+	if !ok {
+		return
+	}
+	delete(boardSubs, subID)
+	close(ch)
+	if len(boardSubs) == 0 {
+		delete(r.subscribers, boardID)
+	}
+}
+
+func (r *Resolver) publishBoardUpdated(boardModel *board.Model) {
+	if boardModel == nil {
+		return
+	}
+	payload := boardToGraphQL(boardModel)
+
+	r.mu.RLock()
+	boardSubs := r.subscribers[boardModel.ID]
+	channels := make([]chan *model.Board, 0, len(boardSubs))
+	for _, ch := range boardSubs {
+		channels = append(channels, ch)
+	}
+	r.mu.RUnlock()
+
+	for _, ch := range channels {
+		select {
+		case ch <- payload:
+		default:
+		}
 	}
 }

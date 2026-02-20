@@ -3,6 +3,7 @@ import {
   BehaviorSubject,
   EMPTY,
   Observable,
+  Subscription,
   Subject,
   catchError,
   concatMap,
@@ -38,6 +39,7 @@ export class WhiteboardFacade {
   private currentBoardId = "";
   private loadRequestId = 0;
   private isCurrentBoardLoaded = false;
+  private boardSubscription?: Subscription;
   private readonly loadErrorSubject = new BehaviorSubject<string | null>(null);
   private readonly saveErrorSubject = new BehaviorSubject<string | null>(null);
   private readonly boardReadySubject = new BehaviorSubject<boolean>(false);
@@ -49,6 +51,8 @@ export class WhiteboardFacade {
   readonly availableWidgets: WidgetDefinition[] = this.widgetCatalog.list();
 
   init(boardId: string): void {
+    this.boardSubscription?.unsubscribe();
+    this.boardSubscription = undefined;
     this.currentBoardId = boardId;
     this.isCurrentBoardLoaded = false;
     this.boardReadySubject.next(false);
@@ -217,6 +221,8 @@ export class WhiteboardFacade {
   }
 
   destroy(): void {
+    this.boardSubscription?.unsubscribe();
+    this.boardSubscription = undefined;
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -245,6 +251,7 @@ export class WhiteboardFacade {
         this.boardReadySubject.next(true);
         this.loadErrorSubject.next(null);
         this.boardSubject.next(board);
+        this.startBoardSubscription(boardId);
       },
       error: (err) => {
         if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
@@ -262,6 +269,27 @@ export class WhiteboardFacade {
     this.boardSubject.next(next);
     if (!this.isCurrentBoardLoaded || next.id !== this.currentBoardId) return;
     this.saveRequests$.next(next);
+  }
+
+  private startBoardSubscription(boardId: string): void {
+    this.boardSubscription?.unsubscribe();
+    this.boardSubscription = this.repo.subscribe(boardId).subscribe({
+      next: (incomingBoard) => {
+        if (boardId !== this.currentBoardId) return;
+        const current = this.boardSubject.value;
+        if (incomingBoard.version < current.version) return;
+        this.isCurrentBoardLoaded = true;
+        this.boardReadySubject.next(true);
+        this.loadErrorSubject.next(null);
+        this.boardSubject.next(incomingBoard);
+      },
+      error: (err) => {
+        if (boardId !== this.currentBoardId) return;
+        this.loadErrorSubject.next(
+          this.errorMessage(err, "Realtime connection error")
+        );
+      },
+    });
   }
 
   private reorder(id: string, direction: 1 | -1): void {

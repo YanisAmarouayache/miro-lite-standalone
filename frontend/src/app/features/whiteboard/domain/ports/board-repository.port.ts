@@ -5,6 +5,7 @@ import { BoardModel } from "../board.model";
 export interface BoardRepositoryPort {
   load(boardId: string): Observable<BoardModel>;
   save(board: BoardModel): Observable<void>;
+  subscribe(boardId: string): Observable<BoardModel>;
 }
 
 export const BOARD_REPOSITORY = new InjectionToken<BoardRepositoryPort>(

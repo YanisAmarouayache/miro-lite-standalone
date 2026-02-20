@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/gorilla/websocket"
 
 	"miro-lite-standalone/backend/internal/board"
 	"miro-lite-standalone/backend/internal/graph"
@@ -18,9 +21,24 @@ func main() {
 
 	// GraphQL
 	resolver := &graph.Resolver{BoardService: svc}
-	gqlSrv := handler.NewDefaultServer(
-		graph.NewExecutableSchema(graph.Config{Resolvers: resolver}),
-	)
+	gqlSrv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+	gqlSrv.AddTransport(transport.Options{})
+	gqlSrv.AddTransport(transport.GET{})
+	gqlSrv.AddTransport(transport.POST{})
+	gqlSrv.AddTransport(transport.MultipartForm{})
+	gqlSrv.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 15 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true
+				}
+				allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
+				return allowedOrigins[origin]
+			},
+		},
+	})
 
 	mux := http.NewServeMux()
 

@@ -35,14 +35,23 @@ func (r *queryResolver) Boards(ctx context.Context) ([]*model.Board, error) {
 	panic("not implemented")
 }
 
+// BoardUpdated is the resolver for the boardUpdated field.
+func (r *subscriptionResolver) BoardUpdated(ctx context.Context, boardID string) (<-chan *model.Board, error) {
+	panic("not implemented")
+}
+
 // Mutation returns graph.MutationResolver implementation.
 func (r *Resolver) Mutation() graph.MutationResolver { return &mutationResolver{r} }
 
 // Query returns graph.QueryResolver implementation.
 func (r *Resolver) Query() graph.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns graph.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() graph.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
 
 // !!! WARNING !!!
 // The code below was going to be deleted when updating resolvers. It has been copied here so you have

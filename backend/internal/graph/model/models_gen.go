@@ -34,6 +34,9 @@ type StickyNote struct {
 	Color    string   `json:"color"`
 }
 
+type Subscription struct {
+}
+
 type WidgetInput struct {
 	ID         string  `json:"id"`
 	Type       string  `json:"type"`

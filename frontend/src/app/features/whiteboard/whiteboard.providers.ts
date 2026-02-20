@@ -1,4 +1,8 @@
-import { EnvironmentProviders, makeEnvironmentProviders } from "@angular/core";
+import {
+  EnvironmentProviders,
+  InjectionToken,
+  makeEnvironmentProviders,
+} from "@angular/core";
 import { provideApollo } from "apollo-angular";
 import {
   ApolloClient,
@@ -11,6 +15,10 @@ import { BoardGraphqlRepository } from "./infrastructure/board-graphql.repositor
 export interface WhiteboardProvidersConfig {
   graphqlUrl: string;
 }
+
+export const WHITEBOARD_GRAPHQL_URL = new InjectionToken<string>(
+  "WHITEBOARD_GRAPHQL_URL"
+);
 
 export function provideWhiteboard(
   config: WhiteboardProvidersConfig
@@ -25,5 +33,6 @@ export function provideWhiteboard(
     ),
     BoardGraphqlRepository,
     { provide: BOARD_REPOSITORY, useExisting: BoardGraphqlRepository },
+    { provide: WHITEBOARD_GRAPHQL_URL, useValue: config.graphqlUrl },
   ]);
 }

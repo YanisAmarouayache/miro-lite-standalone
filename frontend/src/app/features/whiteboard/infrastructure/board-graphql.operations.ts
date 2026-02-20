@@ -26,3 +26,21 @@ export const SAVE_BOARD = gql`
     }
   }
 `;
+
+export const BOARD_UPDATED_SUBSCRIPTION = gql`
+  subscription BoardUpdated($boardId: ID!) {
+    boardUpdated(boardId: $boardId) {
+      id
+      version
+      widgets {
+        id
+        type
+        x
+        y
+        width
+        height
+        configJson
+      }
+    }
+  }
+`;

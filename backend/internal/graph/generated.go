@@ -30,6 +30,7 @@ type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 type ResolverRoot interface {
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -66,6 +67,10 @@ type ComplexityRoot struct {
 		ZIndex   func(childComplexity int) int
 	}
 
+	Subscription struct {
+		BoardUpdated func(childComplexity int, boardID string) int
+	}
+
 	WidgetPayload struct {
 		ConfigJSON func(childComplexity int) int
 		Height     func(childComplexity int) int
@@ -85,6 +90,9 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Board(ctx context.Context, id string) (*model.Board, error)
 	Boards(ctx context.Context) ([]*model.Board, error)
+}
+type SubscriptionResolver interface {
+	BoardUpdated(ctx context.Context, boardID string) (<-chan *model.Board, error)
 }
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
@@ -233,6 +241,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.StickyNote.ZIndex(childComplexity), true
 
+	case "Subscription.boardUpdated":
+		if e.ComplexityRoot.Subscription.BoardUpdated == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_boardUpdated_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Subscription.BoardUpdated(childComplexity, args["boardId"].(string)), true
+
 	case "WidgetPayload.configJson":
 		if e.ComplexityRoot.WidgetPayload.ConfigJSON == nil {
 			break
@@ -329,6 +349,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, opCtx.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, opCtx.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -447,6 +484,17 @@ func (ec *executionContext) field_Query_board_args(ctx context.Context, rawArgs 
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_boardUpdated_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "boardId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["boardId"] = arg0
 	return args, nil
 }
 
@@ -1252,6 +1300,57 @@ func (ec *executionContext) fieldContext_StickyNote_color(_ context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_boardUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	return graphql.ResolveFieldStream(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Subscription_boardUpdated,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Subscription().BoardUpdated(ctx, fc.Args["boardId"].(string))
+		},
+		nil,
+		ec.marshalNBoard2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐBoard,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Subscription_boardUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Board_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Board_title(ctx, field)
+			case "version":
+				return ec.fieldContext_Board_version(ctx, field)
+			case "widgets":
+				return ec.fieldContext_Board_widgets(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_boardUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3301,6 +3400,26 @@ func (ec *executionContext) _StickyNote(ctx context.Context, sel ast.SelectionSe
 	}
 
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		graphql.AddErrorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "boardUpdated":
+		return ec._Subscription_boardUpdated(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var widgetPayloadImplementors = []string{"WidgetPayload"}
