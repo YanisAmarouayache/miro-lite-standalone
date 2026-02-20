@@ -21,11 +21,13 @@ import {
   WIDGET_TYPE_DRAG_MIME
 } from './components/widget-canvas/widget-canvas.component';
 import { WidgetInteractionService } from './services/widget-interaction.service';
+import { WhiteboardZoomService } from './services/whiteboard-zoom.service';
+import { WidgetContextMenuService } from './services/widget-context-menu.service';
 
 @Component({
     selector: 'whiteboard',
     imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
-    providers: [WhiteboardFacade, WidgetInteractionService],
+    providers: [WhiteboardFacade, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService],
     templateUrl: './whiteboard.component.html',
     styleUrl: './whiteboard.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -35,6 +37,8 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) boardId!: string;
   private readonly facade = inject(WhiteboardFacade);
   private readonly interaction = inject(WidgetInteractionService);
+  private readonly zoomState = inject(WhiteboardZoomService);
+  private readonly contextMenuState = inject(WidgetContextMenuService);
   readonly board$ = this.facade.board$;
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
@@ -54,15 +58,21 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   private selectedWidgetId: string | null = null;
-  zoom = 1;
-  zoomIndicatorVisible = false;
-  zoomIndicatorX = 0;
-  zoomIndicatorY = 0;
-  contextMenu: ContextMenuState | null = null;
-  private zoomIndicatorTimer: ReturnType<typeof setTimeout> | null = null;
-  private readonly minZoom = 0.2;
-  private readonly maxZoom = 3;
-  private readonly zoomStep = 0.1;
+  get zoom(): number {
+    return this.zoomState.zoom;
+  }
+  get zoomIndicatorVisible(): boolean {
+    return this.zoomState.zoomIndicatorVisible;
+  }
+  get zoomIndicatorX(): number {
+    return this.zoomState.zoomIndicatorX;
+  }
+  get zoomIndicatorY(): number {
+    return this.zoomState.zoomIndicatorY;
+  }
+  get contextMenu(): ContextMenuState | null {
+    return this.contextMenuState.contextMenu;
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     const boardIdChange = changes['boardId'];
@@ -106,27 +116,23 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   zoomIn(): void {
-    this.setZoomAtPoint(this.zoom + this.zoomStep);
+    this.zoomState.zoomIn(this.canvasRef?.getCanvasElement());
   }
 
   zoomOut(): void {
-    this.setZoomAtPoint(this.zoom - this.zoomStep);
+    this.zoomState.zoomOut(this.canvasRef?.getCanvasElement());
   }
 
   resetZoom(): void {
-    this.setZoomAtPoint(1);
+    this.zoomState.resetZoom(this.canvasRef?.getCanvasElement());
   }
 
   zoomPercent(): number {
-    return Math.round(this.zoom * 100);
+    return this.zoomState.zoomPercent();
   }
 
   onCanvasWheel(event: WheelEvent): void {
-    if (!event.ctrlKey && !event.metaKey) return;
-    event.preventDefault();
-    const delta = event.deltaY < 0 ? this.zoomStep : -this.zoomStep;
-    this.setZoomAtPoint(this.zoom + delta, event.clientX, event.clientY);
-    this.showZoomIndicator(event.clientX, event.clientY);
+    this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
   }
 
   updateText(id: string, text: string): void {
@@ -163,7 +169,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   clearSelection(): void {
     this.selectedWidgetId = null;
     this.interaction.setSelectedWidgetId(null);
-    this.contextMenu = null;
+    this.contextMenuState.close();
   }
 
   remove(id: string): void {
@@ -184,27 +190,13 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   openWidgetContextMenu(widgetId: string, event: MouseEvent): void {
     if (!this.boardReady()) return;
-    event.preventDefault();
-    event.stopPropagation();
     this.selectedWidgetId = widgetId;
     this.interaction.setSelectedWidgetId(widgetId);
-    const menuWidth = 180;
-    const menuHeight = 220;
-    const x = Math.min(event.clientX, window.innerWidth - menuWidth - 8);
-    const y = Math.min(event.clientY, window.innerHeight - menuHeight - 8);
-    this.contextMenu = {
-      widgetId,
-      x: Math.max(8, x),
-      y: Math.max(8, y)
-    };
+    this.contextMenuState.open(widgetId, event);
   }
 
   closeContextMenu(event?: MouseEvent): void {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    this.clearContextMenu();
+    this.contextMenuState.close(event);
   }
 
   openWidgetContextMenuFromLayer(event: LayerListContextMenuEvent): void {
@@ -285,59 +277,20 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
-    this.clearContextMenu();
+    this.contextMenuState.close();
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
-    this.clearContextMenu();
+    this.contextMenuState.close();
   }
 
   ngOnDestroy(): void {
-    if (this.zoomIndicatorTimer) {
-      clearTimeout(this.zoomIndicatorTimer);
-      this.zoomIndicatorTimer = null;
-    }
+    this.zoomState.destroy();
     this.facade.destroy();
   }
 
-  private setZoomAtPoint(nextZoom: number, clientX?: number, clientY?: number): void {
-    const clamped = Math.max(this.minZoom, Math.min(this.maxZoom, nextZoom));
-    if (clamped === this.zoom) return;
-
-    const canvas = this.canvasRef?.getCanvasElement();
-    if (!canvas) {
-      this.zoom = clamped;
-      return;
-    }
-
-    const oldZoom = this.zoom;
-    const rect = canvas.getBoundingClientRect();
-    const anchorX = clientX !== undefined ? clientX - rect.left : canvas.clientWidth / 2;
-    const anchorY = clientY !== undefined ? clientY - rect.top : canvas.clientHeight / 2;
-
-    const worldX = (canvas.scrollLeft + anchorX) / oldZoom;
-    const worldY = (canvas.scrollTop + anchorY) / oldZoom;
-
-    this.zoom = clamped;
-    canvas.scrollLeft = worldX * clamped - anchorX;
-    canvas.scrollTop = worldY * clamped - anchorY;
-  }
-
-  private showZoomIndicator(clientX: number, clientY: number): void {
-    this.zoomIndicatorX = clientX + 14;
-    this.zoomIndicatorY = clientY + 14;
-    this.zoomIndicatorVisible = true;
-    if (this.zoomIndicatorTimer) {
-      clearTimeout(this.zoomIndicatorTimer);
-    }
-    this.zoomIndicatorTimer = setTimeout(() => {
-      this.zoomIndicatorVisible = false;
-      this.zoomIndicatorTimer = null;
-    }, 500);
-  }
-
   private clearContextMenu(): void {
-    this.contextMenu = null;
+    this.contextMenuState.close();
   }
 }
