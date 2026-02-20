@@ -30,7 +30,7 @@
       #canvasRef
       [widgets]="board.widgets"
       [frameOverrides]="frameOverrides"
-      [selectedWidgetId]="selectedWidget(board)?.id ?? null"
+      [selectedWidgetId]="selectedWidget()?.id ?? null"
       [zoom]="zoom"
       [editable]="boardReady()"
       [zoomIndicatorVisible]="zoomIndicatorVisible"
@@ -49,13 +49,13 @@
     <aside class="side-panel">
       <app-layer-list
         [widgets]="board.widgets"
-        [selectedWidgetId]="selectedWidget(board)?.id ?? null"
+        [selectedWidgetId]="selectedWidget()?.id ?? null"
         [definitions]="availableWidgets"
         (selectWidget)="selectWidget($event)"
         (openContextMenu)="openWidgetContextMenuFromLayer($event)"
       ></app-layer-list>
 
-      <ng-container *ngIf="selectedWidget(board) as selected; else noSelectedWidget">
+      <ng-container *ngIf="selectedWidget() as selected; else noSelectedWidget">
         <app-widget-config-panel
           [selectedWidget]="selected"
           [widgetCount]="board.widgets.length"

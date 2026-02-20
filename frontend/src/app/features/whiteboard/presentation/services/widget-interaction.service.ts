@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import { WidgetModel } from '../../domain/board.model';
 import { ResizeDirection, WidgetFrame } from '../components/widget-canvas/widget-canvas.component';
 
@@ -15,14 +16,22 @@ interface InteractionState {
 export class WidgetInteractionService {
   private interaction?: InteractionState;
   private _frameOverrides: ReadonlyMap<string, WidgetFrame> = new Map();
+  private readonly selectedWidgetIdSubject = new BehaviorSubject<string | null>(null);
 
   get frameOverrides(): ReadonlyMap<string, WidgetFrame> {
     return this._frameOverrides;
   }
 
+  readonly selectedWidgetId$ = this.selectedWidgetIdSubject.asObservable();
+
+  setSelectedWidgetId(widgetId: string | null): void {
+    this.selectedWidgetIdSubject.next(widgetId);
+  }
+
   clearAll(): void {
     this.interaction = undefined;
     this._frameOverrides = new Map();
+    this.selectedWidgetIdSubject.next(null);
   }
 
   clearWidget(widgetId: string): void {

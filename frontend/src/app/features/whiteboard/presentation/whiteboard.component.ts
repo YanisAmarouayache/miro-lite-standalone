@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
 import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
@@ -26,6 +27,18 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
   readonly boardReady = toSignal(this.facade.boardReady$, { initialValue: false });
+  readonly selectedWidget = toSignal(
+    combineLatest([
+      this.facade.board$,
+      this.interaction.selectedWidgetId$
+    ]).pipe(
+      map(([board, selectedWidgetId]) => {
+        if (!selectedWidgetId) return undefined;
+        return board.widgets.find((widget) => widget.id === selectedWidgetId);
+      })
+    ),
+    { initialValue: undefined }
+  );
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   private selectedWidgetId: string | null = null;
@@ -106,18 +119,15 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.facade.updateImageFromFile(id, file);
   }
 
-  selectedWidget(board: { widgets: WidgetModel[] }): WidgetModel | undefined {
-    if (!this.selectedWidgetId) return undefined;
-    return board.widgets.find((widget) => widget.id === this.selectedWidgetId);
-  }
-
   selectWidget(widgetId: string): void {
     this.selectedWidgetId = widgetId;
+    this.interaction.setSelectedWidgetId(widgetId);
     this.clearContextMenu();
   }
 
   clearSelection(): void {
     this.selectedWidgetId = null;
+    this.interaction.setSelectedWidgetId(null);
     this.contextMenu = null;
   }
 
@@ -127,6 +137,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.clearContextMenu();
     if (this.selectedWidgetId === id) {
       this.selectedWidgetId = null;
+      this.interaction.setSelectedWidgetId(null);
     }
     this.interaction.clearWidget(id);
   }
