@@ -185,16 +185,11 @@ func (r *Resolver) publishBoardUpdated(boardModel *board.Model) {
 
 	r.mu.RLock()
 	boardSubs := r.subscribers[boardModel.ID]
-	channels := make([]chan *model.Board, 0, len(boardSubs))
 	for _, ch := range boardSubs {
-		channels = append(channels, ch)
-	}
-	r.mu.RUnlock()
-
-	for _, ch := range channels {
 		select {
 		case ch <- payload:
 		default:
 		}
 	}
+	r.mu.RUnlock()
 }
