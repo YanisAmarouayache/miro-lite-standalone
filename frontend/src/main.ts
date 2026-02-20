@@ -9,6 +9,7 @@ import {
 } from "@apollo/client/core";
 import { MiroBoardComponent } from "./app/features/miro-board/presentation/miro-board.component";
 import { BoardGraphqlRepository } from "./app/features/miro-board/infrastructure/board-graphql.repository";
+import { BOARD_REPOSITORY } from "./app/features/miro-board/domain/ports/board-repository.port";
 import { environment } from "./environments/environment";
 
 @Component({
@@ -30,5 +31,6 @@ bootstrapApplication(AppComponent, {
         })
     ),
     BoardGraphqlRepository,
+    { provide: BOARD_REPOSITORY, useExisting: BoardGraphqlRepository },
   ],
 }).catch((err) => console.error(err));

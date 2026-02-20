@@ -17,11 +17,11 @@ import {
 import { BoardModel, WidgetModel } from "../domain/board.model";
 import { WidgetCatalogRepository } from "../infrastructure/widget-catalog.repository";
 import { WidgetDefinition } from "../domain/widget-definition.model";
-import { BoardGraphqlRepository } from "../infrastructure/board-graphql.repository";
+import { BOARD_REPOSITORY, BoardRepositoryPort } from "../domain/ports/board-repository.port";
 
 @Injectable()
 export class MiroBoardFacade {
-  private readonly repo = inject(BoardGraphqlRepository);
+  private readonly repo = inject<BoardRepositoryPort>(BOARD_REPOSITORY);
   private readonly widgetCatalog = inject(WidgetCatalogRepository);
   private readonly destroy$ = new Subject<void>();
   private readonly saveRequests$ = new Subject<BoardModel>();
