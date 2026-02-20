@@ -49,6 +49,11 @@ export class WhiteboardUiService {
     this.facade.addWidgetAt(event.widgetType, x, y);
   }
 
+  addWidget(type: string, editable: boolean): void {
+    if (!editable) return;
+    this.facade.addWidget(type);
+  }
+
   selectWidget(widgetId: string): void {
     this.interaction.setSelectedWidgetId(widgetId);
     this.contextMenu.close();

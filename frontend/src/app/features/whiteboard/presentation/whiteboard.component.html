@@ -10,8 +10,8 @@
         *ngFor="let definition of availableWidgets"
         [disabled]="!boardReady()"
         draggable="true"
-        (dragstart)="onWidgetButtonDragStart(definition.type, $event)"
-        (click)="addWidget(definition.type)"
+        (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, boardReady())"
+        (click)="ui.addWidget(definition.type, boardReady())"
       >
         + {{ definition.name }}
       </button>
@@ -38,15 +38,15 @@
       [zoomIndicatorVisible]="zoomIndicatorVisible"
       [zoomIndicatorX]="zoomIndicatorX"
       [zoomIndicatorY]="zoomIndicatorY"
-      (canvasClick)="clearSelection()"
+      (canvasClick)="ui.clearSelection()"
       (canvasWheel)="onCanvasWheel($event)"
-      (canvasContextMenu)="closeContextMenu($event)"
-      (selectWidget)="selectWidget($event)"
-      (openWidgetContextMenu)="onWidgetContextMenu($event)"
-      (startDrag)="onStartDragRequest($event, board.widgets)"
-      (startResize)="onStartResizeRequest($event)"
-      (updateText)="onWidgetTextChange($event)"
-      (widgetDrop)="onWidgetDrop($event)"
+      (canvasContextMenu)="ui.closeContextMenu($event)"
+      (selectWidget)="ui.selectWidget($event)"
+      (openWidgetContextMenu)="ui.openContextMenu($event.widgetId, $event.event, boardReady())"
+      (startDrag)="ui.onStartDragRequest($event, board.widgets, boardReady())"
+      (startResize)="ui.onStartResizeRequest($event, boardReady())"
+      (updateText)="ui.onWidgetTextChange($event, boardReady())"
+      (widgetDrop)="ui.onWidgetDrop($event, canvasRef.getCanvasElement(), zoom, boardReady())"
     ></app-widget-canvas>
 
     <aside class="side-panel">
@@ -54,9 +54,9 @@
         [widgets]="board.widgets"
         [selectedWidgetId]="selectedWidget()?.id ?? null"
         [definitions]="availableWidgets"
-        (selectWidget)="selectWidget($event)"
-        (openContextMenu)="openWidgetContextMenuFromLayer($event)"
-        (reorderLayer)="onLayerReorder($event)"
+        (selectWidget)="ui.selectWidget($event)"
+        (openContextMenu)="ui.openContextMenu($event.widgetId, $event.event, boardReady())"
+        (reorderLayer)="ui.onLayerReorder($event, boardReady())"
       ></app-layer-list>
 
       <ng-container *ngIf="selectedWidget() as selected; else noSelectedWidget">
@@ -67,12 +67,12 @@
           [chartTypes]="chartTypes"
           [definitions]="availableWidgets"
           [editable]="boardReady()"
-          (action)="onContextMenuAction({ widgetId: selected.id, action: $event })"
-          (updateText)="updateText(selected.id, $event)"
-          (updateChartType)="updateChartType(selected.id, $event)"
-          (updateCounterLabel)="updateCounterLabel(selected.id, $event)"
-          (updateCounterValue)="updateCounterValue(selected.id, $event)"
-          (imageSelected)="updateImageFromFile(selected.id, $event)"
+          (action)="ui.onContextMenuAction({ widgetId: selected.id, action: $event }, boardReady())"
+          (updateText)="ui.onWidgetTextChange({ widgetId: selected.id, text: $event }, boardReady())"
+          (updateChartType)="ui.updateChartType(selected.id, $event, boardReady())"
+          (updateCounterLabel)="ui.updateCounterLabel(selected.id, $event, boardReady())"
+          (updateCounterValue)="ui.updateCounterValue(selected.id, $event, boardReady())"
+          (imageSelected)="ui.updateImageFromFile(selected.id, $event, boardReady())"
         ></app-widget-config-panel>
       </ng-container>
       <ng-template #noSelectedWidget>
@@ -87,5 +87,5 @@
     </aside>
   </div>
 
-  <app-widget-context-menu [menu]="contextMenu" (action)="onContextMenuAction($event)"></app-widget-context-menu>
+  <app-widget-context-menu [menu]="contextMenu" (action)="ui.onContextMenuAction($event, boardReady())"></app-widget-context-menu>
 </section>

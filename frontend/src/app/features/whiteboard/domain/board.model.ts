@@ -58,23 +58,6 @@ export interface BoardModel {
   widgets: WidgetModel[];
 }
 
-export function defaultWidgetConfig(type: WidgetType): WidgetConfig {
-  switch (type) {
-    case "chart":
-      return { chartType: "pie" };
-    case "table":
-      return { rows: [] };
-    case "counter":
-      return { value: 0, label: "Metric" };
-    case "text":
-      return { text: "Yellow box" };
-    case "image":
-      return { src: "", alt: "Imported image" };
-    case "textarea":
-      return { text: "" };
-  }
-}
-
 export function normalizeWidgetConfig(
   type: WidgetType,
   raw: Record<string, unknown> | null | undefined
