@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { WidgetDefinition } from '../domain/widget-definition.model';
+import { WidgetCatalogPort } from "../domain/ports/widget-catalog.port";
 
-@Injectable({ providedIn: 'root' })
-export class WidgetCatalogRepository {
+@Injectable()
+export class WidgetCatalogRepository implements WidgetCatalogPort {
   private readonly definitions: WidgetDefinition[] = [
     {
       type: 'chart',
@@ -56,4 +57,3 @@ export class WidgetCatalogRepository {
     return this.definitions.find((definition) => definition.type === type);
   }
 }
-

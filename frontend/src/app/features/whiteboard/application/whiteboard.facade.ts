@@ -16,18 +16,21 @@ import {
   tap,
 } from "rxjs";
 import { BoardModel, WidgetModel } from "../domain/board.model";
-import { WidgetCatalogRepository } from "../infrastructure/widget-catalog.repository";
 import { WidgetDefinition } from "../domain/widget-definition.model";
 import {
   BOARD_REPOSITORY,
   BoardRepositoryPort,
 } from "../domain/ports/board-repository.port";
+import {
+  WIDGET_CATALOG,
+  WidgetCatalogPort,
+} from "../domain/ports/widget-catalog.port";
 
 @Injectable()
 export class WhiteboardFacade {
   private static readonly MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
   private readonly repo = inject<BoardRepositoryPort>(BOARD_REPOSITORY);
-  private readonly widgetCatalog = inject(WidgetCatalogRepository);
+  private readonly widgetCatalog = inject<WidgetCatalogPort>(WIDGET_CATALOG);
   private readonly destroy$ = new Subject<void>();
   private readonly saveRequests$ = new Subject<BoardModel>();
   private readonly boardSubject = new BehaviorSubject<BoardModel>({
