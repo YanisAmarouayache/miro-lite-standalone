@@ -71,84 +71,125 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   subscribe(boardId: string): Observable<BoardModel> {
     return new Observable<BoardModel>((observer) => {
       const wsUrl = toWebSocketUrl(this.graphqlUrl);
-      const socket = new WebSocket(wsUrl, "graphql-transport-ws");
-      const operationId = `board-updated-${boardId}-${Date.now()}`;
-      let isAcked = false;
+      let socket: WebSocket | null = null;
+      let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+      let disposed = false;
+      let reconnectAttempt = 0;
+      let activeOperationId: string | null = null;
+      const maxReconnectDelayMs = 5000;
 
-      socket.onopen = () => {
-        socket.send(JSON.stringify({ type: "connection_init", payload: {} }));
+      const scheduleReconnect = (): void => {
+        if (disposed || reconnectTimer !== null) return;
+        const delay = Math.min(
+          maxReconnectDelayMs,
+          250 * Math.pow(2, reconnectAttempt)
+        );
+        reconnectAttempt += 1;
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null;
+          connect();
+        }, delay);
       };
 
-      socket.onmessage = (event) => {
-        let payload: any;
-        try {
-          payload = JSON.parse(event.data as string);
-        } catch {
-          return;
-        }
+      const connect = (): void => {
+        if (disposed) return;
+        const currentSocket = new WebSocket(wsUrl, "graphql-transport-ws");
+        socket = currentSocket;
+        const operationId = `board-updated-${boardId}-${Date.now()}`;
+        activeOperationId = operationId;
+        let isAcked = false;
 
-        if (payload.type === "connection_ack") {
-          if (isAcked) return;
-          isAcked = true;
-          socket.send(
-            JSON.stringify({
-              id: operationId,
-              type: "subscribe",
-              payload: {
-                query: print(BOARD_UPDATED_SUBSCRIPTION),
-                variables: { boardId },
-              },
-            })
+        currentSocket.onopen = () => {
+          reconnectAttempt = 0;
+          currentSocket.send(
+            JSON.stringify({ type: "connection_init", payload: {} })
           );
-          return;
-        }
+        };
 
-        if (payload.type === "ping") {
-          socket.send(JSON.stringify({ type: "pong" }));
-          return;
-        }
+        currentSocket.onmessage = (event) => {
+          let payload: any;
+          try {
+            payload = JSON.parse(event.data as string);
+          } catch {
+            return;
+          }
 
-        if (payload.type === "next" && payload.id === operationId) {
-          const board = payload?.payload?.data?.boardUpdated as
-            | {
-                id: string;
-                version: number;
-                widgets: GqlWidgetPayload[];
-              }
-            | undefined;
-          if (!board) return;
-          observer.next({
-            id: board.id ?? boardId,
-            version: board.version ?? 1,
-            widgets: board.widgets?.map(payloadToWidget) ?? [],
-          });
-          return;
-        }
+          if (payload.type === "connection_ack") {
+            if (isAcked) return;
+            isAcked = true;
+            currentSocket.send(
+              JSON.stringify({
+                id: operationId,
+                type: "subscribe",
+                payload: {
+                  query: print(BOARD_UPDATED_SUBSCRIPTION),
+                  variables: { boardId },
+                },
+              })
+            );
+            return;
+          }
 
-        if (payload.type === "error" && payload.id === operationId) {
-          observer.error(new Error("Subscription error"));
-          return;
-        }
+          if (payload.type === "ping") {
+            currentSocket.send(JSON.stringify({ type: "pong" }));
+            return;
+          }
 
-        if (payload.type === "complete" && payload.id === operationId) {
-          observer.complete();
-        }
+          if (payload.type === "next" && payload.id === operationId) {
+            const board = payload?.payload?.data?.boardUpdated as
+              | {
+                  id: string;
+                  version: number;
+                  widgets: GqlWidgetPayload[];
+                }
+              | undefined;
+            if (!board) return;
+            observer.next({
+              id: board.id ?? boardId,
+              version: board.version ?? 1,
+              widgets: board.widgets?.map(payloadToWidget) ?? [],
+            });
+            return;
+          }
+
+          if (payload.type === "error" && payload.id === operationId) {
+            scheduleReconnect();
+            return;
+          }
+
+          if (payload.type === "complete" && payload.id === operationId) {
+            scheduleReconnect();
+          }
+        };
+
+        currentSocket.onerror = () => {
+          scheduleReconnect();
+        };
+
+        currentSocket.onclose = () => {
+          if (socket === currentSocket) {
+            socket = null;
+            activeOperationId = null;
+          }
+          scheduleReconnect();
+        };
       };
 
-      socket.onerror = () => {
-        observer.error(new Error("Subscription connection failed"));
-      };
-
-      socket.onclose = () => {
-        observer.complete();
-      };
+      connect();
 
       return () => {
+        disposed = true;
+        if (reconnectTimer !== null) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+        }
         try {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ id: operationId, type: "complete" }));
+          if (socket?.readyState === WebSocket.OPEN && activeOperationId) {
+            socket.send(
+              JSON.stringify({ id: activeOperationId, type: "complete" })
+            );
           }
-          socket.close();
+          socket?.close();
         } catch {
           // no-op
         }
