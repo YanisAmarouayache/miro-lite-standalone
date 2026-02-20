@@ -22,6 +22,10 @@ export class WidgetInteractionService {
     return this._frameOverrides;
   }
 
+  get selectedWidgetId(): string | null {
+    return this.selectedWidgetIdSubject.value;
+  }
+
   readonly selectedWidgetId$ = this.selectedWidgetIdSubject.asObservable();
 
   setSelectedWidgetId(widgetId: string | null): void {

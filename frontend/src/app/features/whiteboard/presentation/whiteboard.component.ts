@@ -11,23 +11,16 @@ import {
 } from './components/layer-list/layer-list.component';
 import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
 import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
-import {
-  ResizeDirection,
-  WidgetCanvasComponent,
-  WidgetDropEvent,
-  WidgetMouseEvent,
-  WidgetResizeEvent,
-  WidgetTextChangeEvent,
-  WIDGET_TYPE_DRAG_MIME
-} from './components/widget-canvas/widget-canvas.component';
+import { WidgetCanvasComponent, WidgetDropEvent, WidgetMouseEvent, WidgetResizeEvent, WidgetTextChangeEvent } from './components/widget-canvas/widget-canvas.component';
 import { WidgetInteractionService } from './services/widget-interaction.service';
 import { WhiteboardZoomService } from './services/whiteboard-zoom.service';
 import { WidgetContextMenuService } from './services/widget-context-menu.service';
+import { WhiteboardUiService } from './services/whiteboard-ui.service';
 
 @Component({
     selector: 'whiteboard',
     imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
-    providers: [WhiteboardFacade, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService],
+    providers: [WhiteboardFacade, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService, WhiteboardUiService],
     templateUrl: './whiteboard.component.html',
     styleUrl: './whiteboard.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -39,6 +32,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   private readonly interaction = inject(WidgetInteractionService);
   private readonly zoomState = inject(WhiteboardZoomService);
   private readonly contextMenuState = inject(WidgetContextMenuService);
+  private readonly ui = inject(WhiteboardUiService);
   readonly board$ = this.facade.board$;
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
@@ -57,7 +51,6 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   );
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
-  private selectedWidgetId: string | null = null;
   get zoom(): number {
     return this.zoomState.zoom;
   }
@@ -93,26 +86,16 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   onWidgetButtonDragStart(type: string, event: DragEvent): void {
-    if (!this.boardReady()) {
-      event.preventDefault();
-      return;
-    }
-    if (!event.dataTransfer) return;
-    event.dataTransfer.effectAllowed = 'copy';
-    event.dataTransfer.setData(WIDGET_TYPE_DRAG_MIME, type);
-    event.dataTransfer.setData('text/plain', type);
+    this.ui.onWidgetButtonDragStart(type, event, this.boardReady());
   }
 
   onWidgetDrop(event: WidgetDropEvent): void {
-    if (!this.boardReady()) return;
-    const canvas = this.canvasRef?.getCanvasElement();
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const safeZoom = this.zoom || 1;
-    const x = (canvas.scrollLeft + event.clientX - rect.left) / safeZoom;
-    const y = (canvas.scrollTop + event.clientY - rect.top) / safeZoom;
-    this.facade.addWidgetAt(event.widgetType, x, y);
+    this.ui.onWidgetDrop(
+      event,
+      this.canvasRef?.getCanvasElement(),
+      this.zoom,
+      this.boardReady()
+    );
   }
 
   zoomIn(): void {
@@ -136,51 +119,35 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   updateText(id: string, text: string): void {
-    if (!this.boardReady()) return;
-    this.facade.updateWidgetText(id, text);
+    this.ui.onWidgetTextChange({ widgetId: id, text }, this.boardReady());
   }
 
   updateChartType(id: string, chartType: string): void {
-    if (!this.boardReady()) return;
-    this.facade.updateChartType(id, chartType);
+    this.ui.updateChartType(id, chartType, this.boardReady());
   }
 
   updateCounterValue(id: string, value: string): void {
-    if (!this.boardReady()) return;
-    this.facade.updateCounterValue(id, value);
+    this.ui.updateCounterValue(id, value, this.boardReady());
   }
 
   updateCounterLabel(id: string, label: string): void {
-    if (!this.boardReady()) return;
-    this.facade.updateCounterLabel(id, label);
+    this.ui.updateCounterLabel(id, label, this.boardReady());
   }
 
   updateImageFromFile(id: string, file: File): void {
-    if (!this.boardReady()) return;
-    this.facade.updateImageFromFile(id, file);
+    this.ui.updateImageFromFile(id, file, this.boardReady());
   }
 
   selectWidget(widgetId: string): void {
-    this.selectedWidgetId = widgetId;
-    this.interaction.setSelectedWidgetId(widgetId);
-    this.clearContextMenu();
+    this.ui.selectWidget(widgetId);
   }
 
   clearSelection(): void {
-    this.selectedWidgetId = null;
-    this.interaction.setSelectedWidgetId(null);
-    this.contextMenuState.close();
+    this.ui.clearSelection();
   }
 
   remove(id: string): void {
-    if (!this.boardReady()) return;
-    this.facade.remove(id);
-    this.clearContextMenu();
-    if (this.selectedWidgetId === id) {
-      this.selectedWidgetId = null;
-      this.interaction.setSelectedWidgetId(null);
-    }
-    this.interaction.clearWidget(id);
+    this.ui.remove(id, this.boardReady());
   }
 
   selectedLayerPosition(board: { widgets: WidgetModel[] }, widgetId: string): number {
@@ -189,14 +156,11 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   openWidgetContextMenu(widgetId: string, event: MouseEvent): void {
-    if (!this.boardReady()) return;
-    this.selectedWidgetId = widgetId;
-    this.interaction.setSelectedWidgetId(widgetId);
-    this.contextMenuState.open(widgetId, event);
+    this.ui.openContextMenu(widgetId, event, this.boardReady());
   }
 
   closeContextMenu(event?: MouseEvent): void {
-    this.contextMenuState.close(event);
+    this.ui.closeContextMenu(event);
   }
 
   openWidgetContextMenuFromLayer(event: LayerListContextMenuEvent): void {
@@ -204,9 +168,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   onLayerReorder(event: LayerReorderEvent): void {
-    if (!this.boardReady()) return;
-    this.facade.moveWidgetAbove(event.sourceWidgetId, event.targetWidgetId);
-    this.selectWidget(event.sourceWidgetId);
+    this.ui.onLayerReorder(event, this.boardReady());
   }
 
   onWidgetContextMenu(event: WidgetMouseEvent): void {
@@ -214,65 +176,29 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   }
 
   onWidgetTextChange(event: WidgetTextChangeEvent): void {
-    this.updateText(event.widgetId, event.text);
+    this.ui.onWidgetTextChange(event, this.boardReady());
   }
 
   onContextMenuAction(event: ContextMenuActionEvent): void {
-    if (!this.boardReady()) return;
-    switch (event.action) {
-      case 'bring_to_front':
-        this.facade.bringToFront(event.widgetId);
-        break;
-      case 'bring_forward':
-        this.facade.bringForward(event.widgetId);
-        break;
-      case 'send_backward':
-        this.facade.sendBackward(event.widgetId);
-        break;
-      case 'send_to_back':
-        this.facade.sendToBack(event.widgetId);
-        break;
-      case 'remove':
-        this.remove(event.widgetId);
-        break;
-    }
-    this.clearContextMenu();
-  }
-
-  startDrag(widget: WidgetModel, event: MouseEvent): void {
-    if (!this.boardReady()) return;
-    this.selectedWidgetId = widget.id;
-    this.interaction.setSelectedWidgetId(widget.id);
-    this.interaction.startDrag(widget, event);
+    this.ui.onContextMenuAction(event, this.boardReady());
   }
 
   onStartDragRequest(event: WidgetMouseEvent, widgets: WidgetModel[]): void {
-    const widget = widgets.find((item) => item.id === event.widgetId);
-    if (!widget) return;
-    this.startDrag(widget, event.event);
+    this.ui.onStartDragRequest(event, widgets, this.boardReady());
   }
 
   onStartResizeRequest(event: WidgetResizeEvent): void {
-    if (!this.boardReady()) return;
-    this.startResize(event.widget, event.direction, event.event);
-  }
-
-  startResize(widget: WidgetModel, direction: ResizeDirection, event: MouseEvent): void {
-    this.selectedWidgetId = widget.id;
-    this.interaction.setSelectedWidgetId(widget.id);
-    this.interaction.startResize(widget, direction, event);
+    this.ui.onStartResizeRequest(event, this.boardReady());
   }
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
-    this.interaction.onPointerMove(event, this.zoom);
+    this.ui.onPointerMove(event, this.zoom);
   }
 
   @HostListener('document:mouseup')
   onMouseUp(): void {
-    const commit = this.interaction.onPointerUp();
-    if (!commit) return;
-    this.facade.setWidgetFrame(commit.widgetId, commit.frame.x, commit.frame.y, commit.frame.width, commit.frame.height);
+    this.ui.onPointerUp();
   }
 
   @HostListener('document:keydown.escape')
@@ -290,7 +216,4 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.facade.destroy();
   }
 
-  private clearContextMenu(): void {
-    this.contextMenuState.close();
-  }
 }
