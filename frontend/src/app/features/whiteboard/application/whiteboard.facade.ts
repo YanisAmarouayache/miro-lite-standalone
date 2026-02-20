@@ -91,6 +91,22 @@ export class WhiteboardFacade {
     this.patch({ ...board, widgets: [...board.widgets, widget] });
   }
 
+  addWidgetAt(type: string, x: number, y: number): void {
+    const definition = this.widgetCatalog.get(type);
+    if (!definition) return;
+    const board = this.boardSubject.value;
+    const widget: WidgetModel = {
+      id: crypto.randomUUID(),
+      type: definition.type,
+      x: Math.max(0, x - definition.defaultWidth / 2),
+      y: Math.max(0, y - definition.defaultHeight / 2),
+      width: definition.defaultWidth,
+      height: definition.defaultHeight,
+      config: { ...definition.defaultConfig },
+    };
+    this.patch({ ...board, widgets: [...board.widgets, widget] });
+  }
+
   updateConfig(id: string, partialConfig: Record<string, unknown>): void {
     const board = this.boardSubject.value;
     this.patch({

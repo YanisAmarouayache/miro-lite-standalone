@@ -9,6 +9,8 @@
         type="button"
         *ngFor="let definition of availableWidgets"
         [disabled]="!boardReady()"
+        draggable="true"
+        (dragstart)="onWidgetButtonDragStart(definition.type, $event)"
         (click)="addWidget(definition.type)"
       >
         + {{ definition.name }}
@@ -44,6 +46,7 @@
       (startDrag)="onStartDragRequest($event, board.widgets)"
       (startResize)="onStartResizeRequest($event)"
       (updateText)="onWidgetTextChange($event)"
+      (widgetDrop)="onWidgetDrop($event)"
     ></app-widget-canvas>
 
     <aside class="side-panel">

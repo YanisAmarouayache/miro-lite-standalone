@@ -7,7 +7,15 @@ import { WidgetModel } from '../domain/board.model';
 import { LayerListContextMenuEvent, LayerListComponent } from './components/layer-list/layer-list.component';
 import { ContextMenuActionEvent, ContextMenuState, WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
 import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
-import { ResizeDirection, WidgetCanvasComponent, WidgetMouseEvent, WidgetResizeEvent, WidgetTextChangeEvent } from './components/widget-canvas/widget-canvas.component';
+import {
+  ResizeDirection,
+  WidgetCanvasComponent,
+  WidgetDropEvent,
+  WidgetMouseEvent,
+  WidgetResizeEvent,
+  WidgetTextChangeEvent,
+  WIDGET_TYPE_DRAG_MIME
+} from './components/widget-canvas/widget-canvas.component';
 import { WidgetInteractionService } from './services/widget-interaction.service';
 
 @Component({
@@ -68,6 +76,29 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   addWidget(type: string): void {
     if (!this.boardReady()) return;
     this.facade.addWidget(type);
+  }
+
+  onWidgetButtonDragStart(type: string, event: DragEvent): void {
+    if (!this.boardReady()) {
+      event.preventDefault();
+      return;
+    }
+    if (!event.dataTransfer) return;
+    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData(WIDGET_TYPE_DRAG_MIME, type);
+    event.dataTransfer.setData('text/plain', type);
+  }
+
+  onWidgetDrop(event: WidgetDropEvent): void {
+    if (!this.boardReady()) return;
+    const canvas = this.canvasRef?.getCanvasElement();
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const safeZoom = this.zoom || 1;
+    const x = (canvas.scrollLeft + event.clientX - rect.left) / safeZoom;
+    const y = (canvas.scrollTop + event.clientY - rect.top) / safeZoom;
+    this.facade.addWidgetAt(event.widgetType, x, y);
   }
 
   zoomIn(): void {

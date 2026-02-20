@@ -4,6 +4,8 @@
   (click)="canvasClick.emit()"
   (wheel)="canvasWheel.emit($event)"
   (contextmenu)="canvasContextMenu.emit($event)"
+  (dragover)="onCanvasDragOver($event)"
+  (drop)="onCanvasDrop($event)"
 >
   <div
     *ngIf="zoomIndicatorVisible"

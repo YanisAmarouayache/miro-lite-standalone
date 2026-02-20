@@ -3,6 +3,8 @@ import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListe
 import { FormsModule } from '@angular/forms';
 import { WidgetModel } from '../../../domain/board.model';
 
+export const WIDGET_TYPE_DRAG_MIME = 'application/x-whiteboard-widget-type';
+
 export type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 export interface WidgetFrame {
@@ -26,6 +28,12 @@ export interface WidgetResizeEvent {
 export interface WidgetTextChangeEvent {
   widgetId: string;
   text: string;
+}
+
+export interface WidgetDropEvent {
+  widgetType: string;
+  clientX: number;
+  clientY: number;
 }
 
 @Component({
@@ -58,6 +66,7 @@ export class WidgetCanvasComponent {
   @Output() startDrag = new EventEmitter<WidgetMouseEvent>();
   @Output() startResize = new EventEmitter<WidgetResizeEvent>();
   @Output() updateText = new EventEmitter<WidgetTextChangeEvent>();
+  @Output() widgetDrop = new EventEmitter<WidgetDropEvent>();
 
   trackByWidgetId(_: number, widget: WidgetModel): string {
     return widget.id;
@@ -175,7 +184,44 @@ export class WidgetCanvasComponent {
     this.startResize.emit({ widget, direction, event });
   }
 
+  onCanvasDragOver(event: DragEvent): void {
+    if (!this.editable) return;
+    if (!this.canAcceptWidgetDrop(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  onCanvasDrop(event: DragEvent): void {
+    if (!this.editable) return;
+    const widgetType = this.getDroppedWidgetType(event);
+    if (!widgetType) return;
+    event.preventDefault();
+    this.widgetDrop.emit({
+      widgetType,
+      clientX: event.clientX,
+      clientY: event.clientY
+    });
+  }
+
   getCanvasElement(): HTMLDivElement | undefined {
     return this.canvasRoot?.nativeElement;
+  }
+
+  private getDroppedWidgetType(event: DragEvent): string | null {
+    const dt = event.dataTransfer;
+    if (!dt) return null;
+    const typeFromMime = dt.getData(WIDGET_TYPE_DRAG_MIME);
+    if (typeFromMime) return typeFromMime;
+    const typeFromText = dt.getData('text/plain');
+    return typeFromText || null;
+  }
+
+  private canAcceptWidgetDrop(event: DragEvent): boolean {
+    const dt = event.dataTransfer;
+    if (!dt) return false;
+    const types = Array.from(dt.types ?? []);
+    return types.includes(WIDGET_TYPE_DRAG_MIME) || types.includes('text/plain');
   }
 }
