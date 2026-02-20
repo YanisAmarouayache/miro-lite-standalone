@@ -76,13 +76,41 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
       let disposed = false;
       let reconnectAttempt = 0;
       let activeOperationId: string | null = null;
+      let waitingForOnline = false;
+      const baseReconnectDelayMs = 250;
       const maxReconnectDelayMs = 5000;
+
+      const isOnline = (): boolean =>
+        typeof navigator === "undefined" || navigator.onLine !== false;
+
+      const onOnline = (): void => {
+        waitingForOnline = false;
+        if (disposed) return;
+        if (reconnectTimer !== null) return;
+        connect();
+      };
+
+      const waitForOnline = (): void => {
+        if (waitingForOnline) return;
+        if (typeof window === "undefined") return;
+        waitingForOnline = true;
+        window.addEventListener("online", onOnline, { once: true });
+      };
 
       const scheduleReconnect = (): void => {
         if (disposed || reconnectTimer !== null) return;
+        if (!isOnline()) {
+          waitForOnline();
+          return;
+        }
+        const exponentialDelay = Math.min(
+          maxReconnectDelayMs,
+          baseReconnectDelayMs * Math.pow(2, reconnectAttempt)
+        );
+        const jitterMultiplier = 0.5 + Math.random();
         const delay = Math.min(
           maxReconnectDelayMs,
-          250 * Math.pow(2, reconnectAttempt)
+          Math.floor(exponentialDelay * jitterMultiplier)
         );
         reconnectAttempt += 1;
         reconnectTimer = setTimeout(() => {
@@ -101,6 +129,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
 
         currentSocket.onopen = () => {
           reconnectAttempt = 0;
+          waitingForOnline = false;
           currentSocket.send(
             JSON.stringify({ type: "connection_init", payload: {} })
           );
@@ -182,6 +211,10 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
         if (reconnectTimer !== null) {
           clearTimeout(reconnectTimer);
           reconnectTimer = null;
+        }
+        if (waitingForOnline && typeof window !== "undefined") {
+          window.removeEventListener("online", onOnline);
+          waitingForOnline = false;
         }
         try {
           if (socket?.readyState === WebSocket.OPEN && activeOperationId) {
