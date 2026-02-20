@@ -1,19 +1,37 @@
-import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, EMPTY, Observable, Subject, catchError, concatMap, debounceTime, filter, mapTo, of, switchMap, takeUntil, tap } from 'rxjs';
-import { BoardModel, WidgetModel } from '../domain/board.model';
-import { BoardApiRepository } from '../infrastructure/board-api.repository';
-import { WidgetCatalogRepository } from '../infrastructure/widget-catalog.repository';
-import { WidgetDefinition } from '../domain/widget-definition.model';
+import { Injectable, inject } from "@angular/core";
+import {
+  BehaviorSubject,
+  EMPTY,
+  Observable,
+  Subject,
+  catchError,
+  concatMap,
+  debounceTime,
+  filter,
+  mapTo,
+  of,
+  switchMap,
+  takeUntil,
+  tap,
+} from "rxjs";
+import { BoardModel, WidgetModel } from "../domain/board.model";
+import { WidgetCatalogRepository } from "../infrastructure/widget-catalog.repository";
+import { WidgetDefinition } from "../domain/widget-definition.model";
+import { BoardGraphqlRepository } from "../infrastructure/board-graphql.repository";
 
 @Injectable()
 export class MiroBoardFacade {
-  private readonly repo = inject(BoardApiRepository);
+  private readonly repo = inject(BoardGraphqlRepository);
   private readonly widgetCatalog = inject(WidgetCatalogRepository);
   private readonly destroy$ = new Subject<void>();
   private readonly saveRequests$ = new Subject<BoardModel>();
-  private readonly boardSubject = new BehaviorSubject<BoardModel>({ id: '', version: 1, widgets: [] });
+  private readonly boardSubject = new BehaviorSubject<BoardModel>({
+    id: "",
+    version: 1,
+    widgets: [],
+  });
   private autosaveStarted = false;
-  private currentBoardId = '';
+  private currentBoardId = "";
   private loadRequestId = 0;
 
   readonly board$ = this.boardSubject.asObservable();
@@ -25,11 +43,19 @@ export class MiroBoardFacade {
     this.loadBoard(boardId);
   }
 
-  setWidgetFrame(id: string, x: number, y: number, width: number, height: number): void {
+  setWidgetFrame(
+    id: string,
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): void {
     const board = this.boardSubject.value;
     this.patch({
       ...board,
-      widgets: board.widgets.map((w) => (w.id === id ? { ...w, x, y, width, height } : w))
+      widgets: board.widgets.map((w) =>
+        w.id === id ? { ...w, x, y, width, height } : w
+      ),
     });
   }
 
@@ -44,7 +70,7 @@ export class MiroBoardFacade {
       y: 120 + board.widgets.length * 20,
       width: definition.defaultWidth,
       height: definition.defaultHeight,
-      config: { ...definition.defaultConfig }
+      config: { ...definition.defaultConfig },
     };
     this.patch({ ...board, widgets: [...board.widgets, widget] });
   }
@@ -57,10 +83,10 @@ export class MiroBoardFacade {
         w.id === id
           ? {
               ...w,
-              config: { ...(w.config ?? {}), ...partialConfig }
+              config: { ...(w.config ?? {}), ...partialConfig },
             }
           : w
-      )
+      ),
     });
   }
 
@@ -85,7 +111,7 @@ export class MiroBoardFacade {
     const reader = new FileReader();
     reader.onload = () => {
       const src = reader.result;
-      if (typeof src !== 'string') return;
+      if (typeof src !== "string") return;
       this.updateConfig(id, { src, alt: file.name });
     };
     reader.readAsDataURL(file);
@@ -95,7 +121,7 @@ export class MiroBoardFacade {
     const board = this.boardSubject.value;
     this.patch({
       ...board,
-      widgets: board.widgets.filter((w) => w.id !== id)
+      widgets: board.widgets.filter((w) => w.id !== id),
     });
   }
 
@@ -150,13 +176,15 @@ export class MiroBoardFacade {
     const requestId = ++this.loadRequestId;
     this.repo.load(boardId).subscribe({
       next: (board) => {
-        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId) return;
+        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
+          return;
         this.boardSubject.next(board);
       },
       error: () => {
-        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId) return;
+        if (requestId !== this.loadRequestId || boardId !== this.currentBoardId)
+          return;
         this.boardSubject.next({ id: boardId, version: 1, widgets: [] });
-      }
+      },
     });
   }
 
@@ -189,7 +217,7 @@ export class MiroBoardFacade {
       }),
       catchError((e) => {
         if (e?.status !== 409) {
-          console.error('save failed', e);
+          console.error("save failed", e);
           return EMPTY;
         }
         return this.retrySaveWithLatestServerVersion(localBoard.id);
@@ -207,19 +235,22 @@ export class MiroBoardFacade {
         return this.repo
           .save({
             ...latestLocal,
-            version: serverBoard.version
+            version: serverBoard.version,
           })
           .pipe(
             tap(() => {
               const current = this.boardSubject.value;
               if (current.id !== boardId) return;
-              this.boardSubject.next({ ...current, version: serverBoard.version + 1 });
+              this.boardSubject.next({
+                ...current,
+                version: serverBoard.version + 1,
+              });
             }),
             mapTo(void 0)
           );
       }),
       catchError((retryError) => {
-        console.error('save failed after conflict retry', retryError);
+        console.error("save failed after conflict retry", retryError);
         return EMPTY;
       })
     );

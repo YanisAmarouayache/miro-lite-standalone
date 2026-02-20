@@ -30,6 +30,7 @@ export interface WidgetTextChangeEvent {
 
 @Component({
     selector: 'app-widget-canvas',
+    standalone: true,
     imports: [CommonModule, FormsModule],
     templateUrl: './widget-canvas.component.html',
     styleUrl: './widget-canvas.component.css',

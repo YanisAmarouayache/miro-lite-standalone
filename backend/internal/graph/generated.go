@@ -41,6 +41,7 @@ type ComplexityRoot struct {
 		Items   func(childComplexity int) int
 		Title   func(childComplexity int) int
 		Version func(childComplexity int) int
+		Widgets func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -64,6 +65,16 @@ type ComplexityRoot struct {
 		X        func(childComplexity int) int
 		Y        func(childComplexity int) int
 		ZIndex   func(childComplexity int) int
+	}
+
+	WidgetPayload struct {
+		ConfigJSON func(childComplexity int) int
+		Height     func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Type       func(childComplexity int) int
+		Width      func(childComplexity int) int
+		X          func(childComplexity int) int
+		Y          func(childComplexity int) int
 	}
 }
 
@@ -115,6 +126,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Board.Version(childComplexity), true
+	case "Board.widgets":
+		if e.ComplexityRoot.Board.Widgets == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Board.Widgets(childComplexity), true
 
 	case "Mutation.addStickyNote":
 		if e.ComplexityRoot.Mutation.AddStickyNote == nil {
@@ -222,6 +239,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.StickyNote.ZIndex(childComplexity), true
+
+	case "WidgetPayload.configJson":
+		if e.ComplexityRoot.WidgetPayload.ConfigJSON == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.ConfigJSON(childComplexity), true
+	case "WidgetPayload.height":
+		if e.ComplexityRoot.WidgetPayload.Height == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.Height(childComplexity), true
+	case "WidgetPayload.id":
+		if e.ComplexityRoot.WidgetPayload.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.ID(childComplexity), true
+	case "WidgetPayload.type":
+		if e.ComplexityRoot.WidgetPayload.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.Type(childComplexity), true
+	case "WidgetPayload.width":
+		if e.ComplexityRoot.WidgetPayload.Width == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.Width(childComplexity), true
+	case "WidgetPayload.x":
+		if e.ComplexityRoot.WidgetPayload.X == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.X(childComplexity), true
+	case "WidgetPayload.y":
+		if e.ComplexityRoot.WidgetPayload.Y == nil {
+			break
+		}
+
+		return e.ComplexityRoot.WidgetPayload.Y(childComplexity), true
 
 	}
 	return 0, false
@@ -565,6 +625,51 @@ func (ec *executionContext) fieldContext_Board_items(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _Board_widgets(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Board_widgets,
+		func(ctx context.Context) (any, error) {
+			return obj.Widgets, nil
+		},
+		nil,
+		ec.marshalNWidgetPayload2ᚕᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐWidgetPayloadᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Board_widgets(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_WidgetPayload_id(ctx, field)
+			case "type":
+				return ec.fieldContext_WidgetPayload_type(ctx, field)
+			case "x":
+				return ec.fieldContext_WidgetPayload_x(ctx, field)
+			case "y":
+				return ec.fieldContext_WidgetPayload_y(ctx, field)
+			case "width":
+				return ec.fieldContext_WidgetPayload_width(ctx, field)
+			case "height":
+				return ec.fieldContext_WidgetPayload_height(ctx, field)
+			case "configJson":
+				return ec.fieldContext_WidgetPayload_configJson(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type WidgetPayload", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -598,6 +703,8 @@ func (ec *executionContext) fieldContext_Mutation_createBoard(ctx context.Contex
 				return ec.fieldContext_Board_version(ctx, field)
 			case "items":
 				return ec.fieldContext_Board_items(ctx, field)
+			case "widgets":
+				return ec.fieldContext_Board_widgets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
 		},
@@ -710,6 +817,8 @@ func (ec *executionContext) fieldContext_Mutation_saveBoard(ctx context.Context,
 				return ec.fieldContext_Board_version(ctx, field)
 			case "items":
 				return ec.fieldContext_Board_items(ctx, field)
+			case "widgets":
+				return ec.fieldContext_Board_widgets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
 		},
@@ -761,6 +870,8 @@ func (ec *executionContext) fieldContext_Query_board(ctx context.Context, field 
 				return ec.fieldContext_Board_version(ctx, field)
 			case "items":
 				return ec.fieldContext_Board_items(ctx, field)
+			case "widgets":
+				return ec.fieldContext_Board_widgets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
 		},
@@ -811,6 +922,8 @@ func (ec *executionContext) fieldContext_Query_boards(_ context.Context, field g
 				return ec.fieldContext_Board_version(ctx, field)
 			case "items":
 				return ec.fieldContext_Board_items(ctx, field)
+			case "widgets":
+				return ec.fieldContext_Board_widgets(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
 		},
@@ -1177,6 +1290,209 @@ func (ec *executionContext) _StickyNote_color(ctx context.Context, field graphql
 func (ec *executionContext) fieldContext_StickyNote_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "StickyNote",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_id(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_id,
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		ec.marshalNID2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_type(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_type,
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_x(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_x,
+		func(ctx context.Context) (any, error) {
+			return obj.X, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_x(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_y(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_y,
+		func(ctx context.Context) (any, error) {
+			return obj.Y, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_y(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_width(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_width,
+		func(ctx context.Context) (any, error) {
+			return obj.Width, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_width(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_height(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_height,
+		func(ctx context.Context) (any, error) {
+			return obj.Height, nil
+		},
+		nil,
+		ec.marshalNFloat2float64,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_height(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WidgetPayload_configJson(ctx context.Context, field graphql.CollectedField, obj *model.WidgetPayload) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_WidgetPayload_configJson,
+		func(ctx context.Context) (any, error) {
+			return obj.ConfigJSON, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_WidgetPayload_configJson(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WidgetPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2807,6 +3123,11 @@ func (ec *executionContext) _Board(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "widgets":
+			out.Values[i] = ec._Board_widgets(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3025,6 +3346,75 @@ func (ec *executionContext) _StickyNote(ctx context.Context, sel ast.SelectionSe
 			}
 		case "color":
 			out.Values[i] = ec._StickyNote_color(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var widgetPayloadImplementors = []string{"WidgetPayload"}
+
+func (ec *executionContext) _WidgetPayload(ctx context.Context, sel ast.SelectionSet, obj *model.WidgetPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, widgetPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("WidgetPayload")
+		case "id":
+			out.Values[i] = ec._WidgetPayload_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._WidgetPayload_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "x":
+			out.Values[i] = ec._WidgetPayload_x(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "y":
+			out.Values[i] = ec._WidgetPayload_y(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "width":
+			out.Values[i] = ec._WidgetPayload_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "height":
+			out.Values[i] = ec._WidgetPayload_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "configJson":
+			out.Values[i] = ec._WidgetPayload_configJson(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -3559,6 +3949,32 @@ func (ec *executionContext) unmarshalNWidgetInput2ᚕᚖmiroᚑliteᚑstandalone
 func (ec *executionContext) unmarshalNWidgetInput2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐWidgetInput(ctx context.Context, v any) (*model.WidgetInput, error) {
 	res, err := ec.unmarshalInputWidgetInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNWidgetPayload2ᚕᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐWidgetPayloadᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.WidgetPayload) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNWidgetPayload2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐWidgetPayload(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNWidgetPayload2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐWidgetPayload(ctx context.Context, sel ast.SelectionSet, v *model.WidgetPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._WidgetPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

@@ -21,10 +21,11 @@ type AddStickyNoteInput struct {
 }
 
 type Board struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	Version int    `json:"version"`
-	Items   []Item `json:"items"`
+	ID      string           `json:"id"`
+	Title   string           `json:"title"`
+	Version int              `json:"version"`
+	Items   []Item           `json:"items"`
+	Widgets []*WidgetPayload `json:"widgets"`
 }
 
 type Mutation struct {
@@ -55,6 +56,16 @@ func (this StickyNote) GetRotation() *float64 { return this.Rotation }
 func (this StickyNote) GetZIndex() *int       { return this.ZIndex }
 
 type WidgetInput struct {
+	ID         string  `json:"id"`
+	Type       string  `json:"type"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Width      float64 `json:"width"`
+	Height     float64 `json:"height"`
+	ConfigJSON string  `json:"configJson"`
+}
+
+type WidgetPayload struct {
 	ID         string  `json:"id"`
 	Type       string  `json:"type"`
 	X          float64 `json:"x"`

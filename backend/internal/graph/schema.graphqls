@@ -3,6 +3,7 @@ type Board {
   title: String!
   version: Int!
   items: [Item!]!
+  widgets: [WidgetPayload!]!
 }
 
 interface Item {
@@ -30,6 +31,16 @@ type StickyNote implements Item {
 type Query {
   board(id: ID!): Board
   boards: [Board!]!
+}
+
+type WidgetPayload {
+  id: ID!
+  type: String!
+  x: Float!
+  y: Float!
+  width: Float!
+  height: Float!
+  configJson: String!
 }
 
 input WidgetInput {
