@@ -21,8 +21,28 @@ export interface GqlWidgetPayload {
   configJson?: string;
 }
 
+export interface GqlWidgetInput {
+  id: string;
+  type: WidgetType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  configJson: string;
+}
+
+const DEFAULT_WIDGET_TYPE: WidgetType = "textarea";
+const VALID_WIDGET_TYPES = new Set<WidgetType>([
+  "chart",
+  "table",
+  "counter",
+  "text",
+  "image",
+  "textarea",
+]);
+
 export function payloadToWidget(item: GqlWidgetPayload): WidgetModel {
-  const type = asWidgetType(item.type ?? "textarea");
+  const type = asWidgetType(item.type ?? DEFAULT_WIDGET_TYPE);
   const config = normalizeWidgetConfig(type, parseConfigRecord(item.configJson));
   const base = {
     id: item.id ?? crypto.randomUUID(),
@@ -47,7 +67,7 @@ export function payloadToWidget(item: GqlWidgetPayload): WidgetModel {
   }
 }
 
-export function widgetToInput(widget: WidgetModel) {
+export function widgetToInput(widget: WidgetModel): GqlWidgetInput {
   return {
     id: widget.id,
     type: widget.type,
@@ -60,23 +80,18 @@ export function widgetToInput(widget: WidgetModel) {
 }
 
 function asWidgetType(type: string): WidgetType {
-  if (
-    type === "chart" ||
-    type === "table" ||
-    type === "counter" ||
-    type === "text" ||
-    type === "image" ||
-    type === "textarea"
-  ) {
-    return type;
+  if (VALID_WIDGET_TYPES.has(type as WidgetType)) {
+    return type as WidgetType;
   }
-  return "textarea";
+  return DEFAULT_WIDGET_TYPE;
 }
 
 function parseConfigRecord(raw?: string): Record<string, unknown> {
-  if (typeof raw !== "string" || !raw.trim()) return {};
+  if (typeof raw !== "string") return {};
+  const trimmed = raw.trim();
+  if (!trimmed) return {};
   try {
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed = JSON.parse(trimmed) as unknown;
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>;
     }

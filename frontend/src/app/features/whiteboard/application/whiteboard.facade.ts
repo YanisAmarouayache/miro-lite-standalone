@@ -21,7 +21,11 @@ import {
   WidgetCatalogPort,
 } from "../domain/ports/widget-catalog.port";
 import { WidgetCommandService } from "./services/widget-command.service";
-import { ImageUploadPolicyService } from "./services/image-upload-policy.service";
+import {
+  IMAGE_READ_ERROR_CODE,
+  ImageUploadPolicyService,
+  ImageValidationErrorCode,
+} from "./services/image-upload-policy.service";
 import { BoardSyncService } from "./services/board-sync.service";
 
 @Injectable()
@@ -114,9 +118,11 @@ export class WhiteboardFacade {
   }
 
   updateImageFromFile(id: string, file: File): void {
-    const validationError = this.imageUploadPolicy.validate(file);
-    if (validationError) {
-      this.saveErrorSubject.next(validationError);
+    const validation = this.imageUploadPolicy.validate(file);
+    if (!validation.valid && validation.error) {
+      this.saveErrorSubject.next(
+        this.toImageValidationErrorKey(validation.error.code)
+      );
       return;
     }
     this.imageUploadPolicy
@@ -126,8 +132,14 @@ export class WhiteboardFacade {
         this.updateConfig(id, { src, alt: file.name });
       })
       .catch((error) => {
+        const message = this.boardSync.errorMessage(
+          error,
+          "whiteboard.errors.image.readFailed"
+        );
         this.saveErrorSubject.next(
-          this.boardSync.errorMessage(error, "Failed to read image file.")
+          message === IMAGE_READ_ERROR_CODE
+            ? "whiteboard.errors.image.readFailed"
+            : message
         );
       });
   }
@@ -252,5 +264,14 @@ export class WhiteboardFacade {
       },
       (message) => this.saveErrorSubject.next(message)
     );
+  }
+
+  private toImageValidationErrorKey(code: ImageValidationErrorCode): string {
+    switch (code) {
+      case ImageValidationErrorCode.INVALID_TYPE:
+        return "whiteboard.errors.image.invalidType";
+      case ImageValidationErrorCode.TOO_LARGE:
+        return "whiteboard.errors.image.tooLarge";
+    }
   }
 }
