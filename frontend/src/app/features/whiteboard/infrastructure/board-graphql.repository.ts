@@ -14,7 +14,10 @@ import {
   createBoardSubscriptionStream,
   toWebSocketUrl,
 } from "./board-graphql.subscription";
-import { WHITEBOARD_GRAPHQL_URL } from "../whiteboard.providers";
+import {
+  WHITEBOARD_APOLLO_CLIENT,
+  WHITEBOARD_GRAPHQL_URL,
+} from "../whiteboard.providers";
 
 @Injectable()
 export class BoardGraphqlRepository implements BoardRepositoryPort {
@@ -23,6 +26,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
 
   load(boardId: string): Observable<BoardModel> {
     return this.apollo
+      .use(WHITEBOARD_APOLLO_CLIENT)
       .query<{
         board: { id: string; version: number; widgets: GqlWidgetPayload[] } | null;
       }>({
@@ -48,6 +52,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
 
   save(board: BoardModel): Observable<number> {
     return this.apollo
+      .use(WHITEBOARD_APOLLO_CLIENT)
       .mutate<{
         saveBoard: { id: string; version: number } | null;
       }>({

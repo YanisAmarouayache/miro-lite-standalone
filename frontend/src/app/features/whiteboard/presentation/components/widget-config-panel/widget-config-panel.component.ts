@@ -14,7 +14,7 @@ export type WidgetPanelAction = 'send_to_back' | 'send_backward' | 'bring_forwar
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WidgetConfigPanelComponent {
-  @Input({ required: true }) selectedWidget?: WidgetModel;
+  @Input() selectedWidget?: WidgetModel;
   @Input({ required: true }) widgetCount = 0;
   @Input({ required: true }) layerPosition = 0;
   @Input() chartTypes: string[] = [];

@@ -5,6 +5,7 @@ Composant Angular standalone, intégrable dans une app existante.
 ## API
 - Input: `boardId: string` (required)
 - Provider helper: `provideWhiteboard({ graphqlUrl })`
+- Apollo client: named client `whiteboard` (does not override the host default)
 
 ## Intégration (app hôte)
 ### 1) Providers globaux
@@ -12,12 +13,37 @@ Composant Angular standalone, intégrable dans une app existante.
 // app.config.ts (ou bootstrapApplication)
 import { ApplicationConfig } from "@angular/core";
 import { provideHttpClient, withFetch } from "@angular/common/http";
-import { provideWhiteboard } from "path/to/whiteboard";
+import { provideApollo } from "apollo-angular";
+import {
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+} from "@apollo/client/core";
+import {
+  provideWhiteboard,
+  WHITEBOARD_APOLLO_CLIENT,
+} from "path/to/whiteboard";
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(withFetch()),
-    provideWhiteboard({ graphqlUrl: "https://your-api/graphql" }),
+    provideApollo((injector) => ({
+      default: new ApolloClient({
+        cache: new InMemoryCache(),
+        link: createHttpLink({
+          uri: "https://your-api/graphql",
+          injector,
+        }),
+      }),
+      [WHITEBOARD_APOLLO_CLIENT]: new ApolloClient({
+        cache: new InMemoryCache(),
+        link: createHttpLink({
+          uri: "https://whiteboard-api/graphql",
+          injector,
+        }),
+      }),
+    })),
+    provideWhiteboard({ graphqlUrl: "https://whiteboard-api/graphql" }),
   ],
 };
 ```

@@ -6,7 +6,7 @@
     [class.layer-item-selected]="isSelected(widget.id)"
     [class.layer-item-dragging]="draggingWidgetId === widget.id"
     [class.layer-item-drop-target]="dropTargetWidgetId === widget.id"
-    *ngFor="let widget of orderedWidgets(); trackBy: trackByWidgetId"
+    *ngFor="let widget of orderedWidgets; trackBy: trackByWidgetId"
     draggable="true"
     (dragstart)="onDragStart(widget.id, $event)"
     (dragenter)="onDragEnter(widget.id, $event)"

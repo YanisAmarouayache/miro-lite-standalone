@@ -20,7 +20,7 @@ import { ContextMenuState } from "./models/widget-context-menu.model";
     imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
     providers: [WhiteboardFacade, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService, WhiteboardUiService],
     templateUrl: './whiteboard.component.html',
-    styleUrl: './whiteboard.component.css',
+    styleUrl: './whiteboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WhiteboardComponent implements OnChanges, OnDestroy {

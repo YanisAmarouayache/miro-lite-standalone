@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { WidgetModel } from '../../../domain/board.model';
 import { WidgetDefinition } from '../../../domain/widget-definition.model';
 import {
@@ -14,19 +22,34 @@ import {
     styleUrl: './layer-list.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LayerListComponent {
+export class LayerListComponent implements OnChanges {
   @Input({ required: true }) widgets: WidgetModel[] = [];
   @Input() selectedWidgetId: string | null = null;
   @Input() definitions: WidgetDefinition[] = [];
   draggingWidgetId: string | null = null;
   dropTargetWidgetId: string | null = null;
+  orderedWidgets: WidgetModel[] = [];
+  private layerNumberById = new Map<string, number>();
+  private widgetNameByType = new Map<string, string>();
 
   @Output() selectWidget = new EventEmitter<string>();
   @Output() openContextMenu = new EventEmitter<LayerListContextMenuEvent>();
   @Output() reorderLayer = new EventEmitter<LayerReorderEvent>();
 
-  orderedWidgets(): WidgetModel[] {
-    return [...this.widgets].reverse();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['widgets']) {
+      this.orderedWidgets = [...this.widgets].reverse();
+      this.layerNumberById.clear();
+      for (let i = 0; i < this.widgets.length; i += 1) {
+        this.layerNumberById.set(this.widgets[i].id, i + 1);
+      }
+    }
+    if (changes['definitions']) {
+      this.widgetNameByType.clear();
+      for (const definition of this.definitions) {
+        this.widgetNameByType.set(definition.type, definition.name);
+      }
+    }
   }
 
   isSelected(widgetId: string): boolean {
@@ -42,13 +65,11 @@ export class LayerListComponent {
   }
 
   layerNumber(widgetId: string): number {
-    const index = this.widgets.findIndex((widget) => widget.id === widgetId);
-    return index + 1;
+    return this.layerNumberById.get(widgetId) ?? 0;
   }
 
   widgetName(type: string): string {
-    const definition = this.definitions.find((item) => item.type === type);
-    return definition?.name ?? type;
+    return this.widgetNameByType.get(type) ?? type;
   }
 
   onContextMenu(widgetId: string, event: MouseEvent): void {

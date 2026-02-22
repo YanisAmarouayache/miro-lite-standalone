@@ -12,7 +12,7 @@ Projet inspiré de `miro-clone`, orienté **frontend-first** avec Angular et un 
 - Backend Go minimal (sans auth), uniquement pour charger/sauver l'état d'un board.
 
 ## Structure
-- `frontend/`: Angular app + composant standalone `miro-board`
+- `frontend/`: Angular app + composant standalone `whiteboard`
 - `backend/`: API HTTP minimale avec persistance JSON locale (`backend/data/boards.json`)
 
 ## Quick start
@@ -36,15 +36,52 @@ npm start
 ```
 
 ## Intégrer le composant standalone dans une autre app Angular
-Importer `MiroBoardComponent` depuis:
-- `frontend/src/app/features/miro-board/index.ts`
+Importer `WhiteboardComponent` depuis:
+- `frontend/src/app/features/whiteboard/index.ts`
+
+Providers globaux (Apollo requis, le client `whiteboard` est nommé):
+```ts
+import { ApplicationConfig } from "@angular/core";
+import { provideHttpClient, withFetch } from "@angular/common/http";
+import { provideApollo } from "apollo-angular";
+import {
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+} from "@apollo/client/core";
+import { provideWhiteboard } from "path/to/whiteboard";
+import { WHITEBOARD_APOLLO_CLIENT } from "path/to/whiteboard";
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideHttpClient(withFetch()),
+    provideApollo((injector) => ({
+      default: new ApolloClient({
+        cache: new InMemoryCache(),
+        link: createHttpLink({
+          uri: "https://your-api/graphql",
+          injector,
+        }),
+      }),
+      [WHITEBOARD_APOLLO_CLIENT]: new ApolloClient({
+        cache: new InMemoryCache(),
+        link: createHttpLink({
+          uri: "https://whiteboard-api/graphql",
+          injector,
+        }),
+      }),
+    })),
+    provideWhiteboard({ graphqlUrl: "https://whiteboard-api/graphql" }),
+  ],
+};
+```
 
 Puis dans ton composant hôte:
 ```ts
 @Component({
   standalone: true,
-  imports: [MiroBoardComponent],
-  template: `<miro-board [boardId]="'demo-board'"></miro-board>`
+  imports: [WhiteboardComponent],
+  template: `<whiteboard [boardId]="'demo-board'"></whiteboard>`
 })
 export class HostComponent {}
 ```
