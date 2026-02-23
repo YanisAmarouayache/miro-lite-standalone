@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
@@ -26,6 +26,8 @@ import { ContextMenuState } from "./models/widget-context-menu.model";
 export class WhiteboardComponent implements OnChanges, OnDestroy {
   @ViewChild('canvasRef') private canvasRef?: WidgetCanvasComponent;
   @Input({ required: true }) boardId!: string;
+  private readonly hostRef = inject(ElementRef<HTMLElement>);
+  private readonly document = inject(DOCUMENT);
   private readonly facade = inject(WhiteboardFacade);
   private readonly interaction = inject(WidgetInteractionService);
   private readonly zoomState = inject(WhiteboardZoomService);
@@ -49,6 +51,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   );
   readonly availableWidgets = this.facade.availableWidgets;
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
+  fullscreen = false;
   get zoom(): number {
     return this.zoomState.zoom;
   }
@@ -115,12 +118,42 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    if (this.fullscreen) {
+      this.exitFullscreen();
+      return;
+    }
     this.contextMenuState.close();
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.contextMenuState.close();
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.fullscreen = !!this.document.fullscreenElement;
+  }
+
+  toggleFullscreen(): void {
+    if (this.fullscreen) {
+      this.exitFullscreen();
+      return;
+    }
+    const target = this.hostRef.nativeElement;
+    if (target.requestFullscreen) {
+      target.requestFullscreen().catch(() => {
+        // no-op
+      });
+    }
+  }
+
+  private exitFullscreen(): void {
+    if (this.document.fullscreenElement && this.document.exitFullscreen) {
+      this.document.exitFullscreen().catch(() => {
+        // no-op
+      });
+    }
   }
 
   ngOnDestroy(): void {

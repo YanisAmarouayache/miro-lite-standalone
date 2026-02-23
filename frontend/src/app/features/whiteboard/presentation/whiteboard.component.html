@@ -1,4 +1,4 @@
-<section class="whiteboard-shell" *ngIf="viewModel$ | async as viewModel">
+<section class="whiteboard-shell" *ngIf="viewModel$ | async as viewModel" [class.is-fullscreen]="fullscreen">
   <div class="board-title">Board: {{ viewModel.board.id }}</div>
   <p class="error-banner" *ngIf="!viewModel.editable">
     Board is read-only until data is loaded.
@@ -85,9 +85,14 @@
     </button>
   </div>
 
-  <div class="zoom-toolbar">
-    <button type="button" (click)="zoomOut()">-</button>
-    <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
-    <button type="button" (click)="zoomIn()">+</button>
+  <div class="zoom-toolbar-wrapper">
+    <div class="zoom-toolbar">
+      <button type="button" (click)="zoomOut()">-</button>
+      <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
+      <button type="button" (click)="zoomIn()">+</button>
+      <button type="button" class="fullscreen-toggle" (click)="toggleFullscreen()">
+        {{ fullscreen ? 'Exit' : 'Full' }}
+      </button>
+    </div>
   </div>
 </section>

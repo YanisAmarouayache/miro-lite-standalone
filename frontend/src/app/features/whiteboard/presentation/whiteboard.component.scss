@@ -109,10 +109,14 @@ app-widget-canvas {
   transform: translateY(-1px);
 }
 
-.zoom-toolbar {
+.zoom-toolbar-wrapper {
   position: fixed;
   right: 16px;
   bottom: 16px;
+  z-index: 20;
+}
+
+.zoom-toolbar {
   display: flex;
   gap: 8px;
   padding: 8px;
@@ -120,7 +124,7 @@ app-widget-canvas {
   background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  z-index: 20;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .zoom-toolbar button {
@@ -138,6 +142,31 @@ app-widget-canvas {
   background: rgba(66, 153, 225, 0.45);
   box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
   transform: translateY(-1px);
+}
+
+.zoom-toolbar .fullscreen-toggle {
+  min-width: 56px;
+}
+
+.whiteboard-shell.is-fullscreen .zoom-toolbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+}
+
+.whiteboard-shell.is-fullscreen .zoom-toolbar-wrapper:hover .zoom-toolbar,
+.whiteboard-shell.is-fullscreen .zoom-toolbar:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.whiteboard-shell.is-fullscreen .board-title,
+.whiteboard-shell.is-fullscreen .side-panel,
+.whiteboard-shell.is-fullscreen .widgets-rail,
+.whiteboard-shell.is-fullscreen .error-banner,
+.whiteboard-shell.is-fullscreen app-widget-context-menu {
+  display: none;
 }
 
 .error-banner {
