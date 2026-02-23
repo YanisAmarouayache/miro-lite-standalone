@@ -26,37 +26,73 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
 .whiteboard-shell {
   height: 100%;
   display: grid;
-  grid-template-rows: 56px 1fr;
+  grid-template-rows: 1fr;
   color: var(--whiteboard-text);
   background:
     radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%),
     var(--whiteboard-bg);
 }
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(66, 153, 225, 0.2);
+.board-title {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 10px;
+  border: 1px solid rgba(66, 153, 225, 0.2);
   background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.toolbar h3 {
-  margin-left: calc(45px + #{$navigation-rail-width} + #{$toolbar-container-padding});
   color: #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   font-weight: 600;
+  font-size: 13px;
+  z-index: 20;
 }
 
-.toolbar-actions {
+.board-layout {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+app-widget-canvas {
+  min-width: 0;
+  min-height: 0;
+}
+
+.side-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 320px;
+  border: 1px solid rgba(66, 153, 225, 0.2);
+  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border-radius: 10px;
+  z-index: 20;
+}
+
+.widgets-rail {
+  position: fixed;
+  top: 50%;
+  left: calc(12px + #{$navigation-rail-width});
+  transform: translateY(-50%);
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  padding: 10px;
+  border: 1px solid rgba(66, 153, 225, 0.2);
+  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 20;
 }
 
-.toolbar-actions button {
+.widgets-rail button {
   border: 1px solid rgba(66, 153, 225, 0.3);
   border-radius: 6px;
   background: rgba(66, 153, 225, 0.3);
@@ -66,32 +102,42 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   transition: all 0.2s ease;
 }
 
-.toolbar-actions button:hover {
+.widgets-rail button:hover {
   border-color: rgba(66, 153, 225, 0.5);
   background: rgba(66, 153, 225, 0.45);
   box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
   transform: translateY(-1px);
 }
 
-.board-layout {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-}
-
-app-widget-canvas {
-  min-width: 0;
-  min-height: 0;
-}
-
-.side-panel {
-  border-left: 1px solid rgba(66, 153, 225, 0.2);
+.zoom-toolbar {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(66, 153, 225, 0.2);
   background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  display: grid;
-  align-content: start;
-  gap: 10px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+}
+
+.zoom-toolbar button {
+  border: 1px solid rgba(66, 153, 225, 0.3);
+  border-radius: 6px;
+  background: rgba(66, 153, 225, 0.3);
+  color: #e2e8f0;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoom-toolbar button:hover {
+  border-color: rgba(66, 153, 225, 0.5);
+  background: rgba(66, 153, 225, 0.45);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+  transform: translateY(-1px);
 }
 
 .error-banner {

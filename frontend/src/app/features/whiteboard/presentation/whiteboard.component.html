@@ -1,22 +1,5 @@
 <section class="whiteboard-shell" *ngIf="viewModel$ | async as viewModel">
-  <header class="toolbar">
-    <h3>Board: {{ viewModel.board.id }}</h3>
-    <div class="toolbar-actions">
-      <button type="button" (click)="zoomOut()">-</button>
-      <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
-      <button type="button" (click)="zoomIn()">+</button>
-      <button
-        type="button"
-        *ngFor="let definition of availableWidgets"
-        [disabled]="!viewModel.editable"
-        draggable="true"
-        (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
-        (click)="ui.addWidget(definition.type, viewModel.editable)"
-      >
-        + {{ definition.name }}
-      </button>
-    </div>
-  </header>
+  <div class="board-title">Board: {{ viewModel.board.id }}</div>
   <p class="error-banner" *ngIf="!viewModel.editable">
     Board is read-only until data is loaded.
   </p>
@@ -88,4 +71,23 @@
   </div>
 
   <app-widget-context-menu [menu]="contextMenu" (action)="ui.onContextMenuAction($event, viewModel.editable)"></app-widget-context-menu>
+
+  <div class="widgets-rail">
+    <button
+      type="button"
+      *ngFor="let definition of availableWidgets"
+      [disabled]="!viewModel.editable"
+      draggable="true"
+      (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
+      (click)="ui.addWidget(definition.type, viewModel.editable)"
+    >
+      + {{ definition.name }}
+    </button>
+  </div>
+
+  <div class="zoom-toolbar">
+    <button type="button" (click)="zoomOut()">-</button>
+    <button type="button" (click)="resetZoom()">{{ zoomPercent() }}%</button>
+    <button type="button" (click)="zoomIn()">+</button>
+  </div>
 </section>
