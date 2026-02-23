@@ -101,6 +101,11 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
   }
 
+  onShellWheel(event: WheelEvent): void {
+    event.preventDefault();
+    this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
+  }
+
   selectedLayerPosition(widgets: WidgetModel[], widgetId: string): number {
     const index = widgets.findIndex((widget) => widget.id === widgetId);
     return index + 1;
