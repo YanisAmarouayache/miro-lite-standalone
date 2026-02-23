@@ -18,7 +18,8 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   --whiteboard-danger: #c7354a;
 }
 
-:host, :host * {
+:host,
+:host * {
   box-sizing: border-box;
 }
 
@@ -26,10 +27,10 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   height: 100%;
   display: grid;
   grid-template-rows: 56px 1fr;
-  margin-left: calc(#{$navigation-rail-width} + #{$toolbar-container-padding});
-  padding-top: $whiteboard-top-offset;
   color: var(--whiteboard-text);
-  background: radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%), var(--whiteboard-bg);
+  background:
+    radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%),
+    var(--whiteboard-bg);
 }
 
 .toolbar {
@@ -37,9 +38,15 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--whiteboard-border);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(4px);
+  border-bottom: 1px solid rgba(66, 153, 225, 0.2);
+  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.toolbar h3 {
+  margin-left: calc(45px + #{$navigation-rail-width} + #{$toolbar-container-padding});
+  color: #e2e8f0;
+  font-weight: 600;
 }
 
 .toolbar-actions {
@@ -50,19 +57,20 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
 }
 
 .toolbar-actions button {
-  border: 1px solid var(--whiteboard-border-strong);
+  border: 1px solid rgba(66, 153, 225, 0.3);
   border-radius: 6px;
-  background: var(--whiteboard-surface);
-  color: var(--whiteboard-text);
+  background: rgba(66, 153, 225, 0.3);
+  color: #e2e8f0;
   padding: 6px 10px;
   cursor: pointer;
-  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  transition: all 0.2s ease;
 }
 
 .toolbar-actions button:hover {
-  border-color: var(--whiteboard-accent);
-  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
-  background: var(--whiteboard-surface-soft);
+  border-color: rgba(66, 153, 225, 0.5);
+  background: rgba(66, 153, 225, 0.45);
+  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+  transform: translateY(-1px);
 }
 
 .board-layout {
@@ -77,8 +85,9 @@ app-widget-canvas {
 }
 
 .side-panel {
-  border-left: 1px solid var(--whiteboard-border);
-  background: var(--whiteboard-surface-soft);
+  border-left: 1px solid rgba(66, 153, 225, 0.2);
+  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
   padding: 12px;
   display: grid;
   align-content: start;

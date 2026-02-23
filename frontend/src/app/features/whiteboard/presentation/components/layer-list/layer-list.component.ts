@@ -19,7 +19,7 @@ import {
     selector: 'app-layer-list',
     imports: [CommonModule],
     templateUrl: './layer-list.component.html',
-    styleUrl: './layer-list.component.css',
+    styleUrl: './layer-list.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LayerListComponent implements OnChanges {
