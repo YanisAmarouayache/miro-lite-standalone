@@ -14,18 +14,17 @@ import (
 
 type Resolver struct {
 	BoardService *board.Service
-	mu          sync.RWMutex
-	nextSubID   int
-	subscribers map[string]map[int]chan *model.Board
+	mu           sync.RWMutex
+	nextSubID    int
+	subscribers  map[string]map[int]chan *model.Board
 }
 
 func NewResolver(svc *board.Service) *Resolver {
-    return &Resolver{
-        BoardService: svc,
-        subscribers:  make(map[string]map[int]chan *model.Board),
-    }
+	return &Resolver{
+		BoardService: svc,
+		subscribers:  make(map[string]map[int]chan *model.Board),
+	}
 }
-
 
 func (r *Resolver) Query() QueryResolver       { return &queryResolver{r} }
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
@@ -134,7 +133,7 @@ func widgetToPayload(w board.Widget) *model.WidgetPayload {
 func (r *Resolver) addSubscriber(boardID string) (chan *model.Board, int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	if r.subscribers[boardID] == nil {
 		r.subscribers[boardID] = make(map[int]chan *model.Board)
 	}

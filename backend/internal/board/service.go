@@ -74,15 +74,15 @@ func (s *Service) ListBoards() []*Model {
 }
 
 func (s *Service) CreateBoard(id, title string) (*Model, error) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    b := Model{ID: id, Title: title, Version: 1, Widgets: []Widget{}}
-    s.boards[id] = b
-    if err := s.saveToDisk(); err != nil {
-        delete(s.boards, id) // rollback in-memory state
-        return nil, err
-    }
-    return &b, nil
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	b := Model{ID: id, Title: title, Version: 1, Widgets: []Widget{}}
+	s.boards[id] = b
+	if err := s.saveToDisk(); err != nil {
+		delete(s.boards, id) // rollback in-memory state
+		return nil, err
+	}
+	return &b, nil
 }
 
 func (s *Service) Count() int {
@@ -110,27 +110,27 @@ func (s *Service) HandleBoard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) handleGet(w http.ResponseWriter, id string) {
-    s.mu.RLock()
-    board, ok := s.boards[id]
-    s.mu.RUnlock()
+	s.mu.RLock()
+	board, ok := s.boards[id]
+	s.mu.RUnlock()
 
-    if !ok {
-        s.mu.Lock()
-        // Double-check after acquiring write lock
-        if _, stillMissing := s.boards[id]; stillMissing {
-            board = Model{ID: id, Version: 1, Widgets: []Widget{}}
-            s.boards[id] = board
-        } else {
-            board = s.boards[id]
-        }
-        s.mu.Unlock()
-    }
+	if !ok {
+		s.mu.Lock()
+		// Double-check after acquiring write lock
+		if _, stillMissing := s.boards[id]; stillMissing {
+			board = Model{ID: id, Version: 1, Widgets: []Widget{}}
+			s.boards[id] = board
+		} else {
+			board = s.boards[id]
+		}
+		s.mu.Unlock()
+	}
 
-    for i := range board.Widgets {
-        normalizeWidget(&board.Widgets[i])
-    }
-    w.Header().Set("Content-Type", "application/json")
-    _ = json.NewEncoder(w).Encode(board)
+	for i := range board.Widgets {
+		normalizeWidget(&board.Widgets[i])
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(board)
 }
 
 func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
@@ -162,25 +162,24 @@ func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (s *Service) loadFromDisk() {
-    if s.storePath == "" {
-        return
-    }
-    content, err := os.ReadFile(s.storePath)
-    if err != nil {
-        if !errors.Is(err, os.ErrNotExist) {
-            log.Printf("warn: could not read store %q: %v", s.storePath, err)
-        }
-        return
-    }
-    var persisted map[string]Model
-    if err := json.Unmarshal(content, &persisted); err != nil {
-        log.Printf("warn: corrupt store %q, starting empty: %v", s.storePath, err)
-        return
-    }
-    s.boards = persisted
-    log.Printf("loaded %d boards from %s", len(s.boards), s.storePath)
+	if s.storePath == "" {
+		return
+	}
+	content, err := os.ReadFile(s.storePath)
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			log.Printf("warn: could not read store %q: %v", s.storePath, err)
+		}
+		return
+	}
+	var persisted map[string]Model
+	if err := json.Unmarshal(content, &persisted); err != nil {
+		log.Printf("warn: corrupt store %q, starting empty: %v", s.storePath, err)
+		return
+	}
+	s.boards = persisted
+	log.Printf("loaded %d boards from %s", len(s.boards), s.storePath)
 }
-
 
 func (s *Service) saveToDisk() error {
 	if s.storePath == "" {
@@ -217,22 +216,22 @@ func normalizeWidget(widget *Widget) {
 }
 
 func (s *Service) SaveBoard(id string, version int, widgets []Widget) (*Model, error) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    current, ok := s.boards[id]
-    if !ok {
-        current = Model{ID: id, Version: 1, Widgets: []Widget{}}
-    }
-    if version != current.Version {
-        return nil, fmt.Errorf("version conflict: expected %d got %d", current.Version, version)
-    }
-    for i := range widgets {
-        normalizeWidget(&widgets[i])
-    }
-    next := Model{ID: id, Title: current.Title, Version: current.Version + 1, Widgets: widgets}
-    s.boards[id] = next
-    if err := s.saveToDisk(); err != nil {
-        return nil, err
-    }
-    return &next, nil
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	current, ok := s.boards[id]
+	if !ok {
+		current = Model{ID: id, Version: 1, Widgets: []Widget{}}
+	}
+	if version != current.Version {
+		return nil, fmt.Errorf("version conflict: expected %d got %d", current.Version, version)
+	}
+	for i := range widgets {
+		normalizeWidget(&widgets[i])
+	}
+	next := Model{ID: id, Title: current.Title, Version: current.Version + 1, Widgets: widgets}
+	s.boards[id] = next
+	if err := s.saveToDisk(); err != nil {
+		return nil, err
+	}
+	return &next, nil
 }

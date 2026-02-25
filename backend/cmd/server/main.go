@@ -16,9 +16,19 @@ import (
 	"miro-lite-standalone/backend/internal/board"
 	"miro-lite-standalone/backend/internal/graph"
 )
+func getEnvOrDefault(key, fallback string) string {
+    if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+        return v
+    }
+    return fallback
+}
 
 func main() {
-	svc := board.NewService("data/boards.json")
+	storePath := getEnvOrDefault("STORE_PATH", "data/boards.json")
+    port      := getEnvOrDefault("PORT", "8091")
+    addr      := ":" + port
+
+    svc := board.NewService(storePath)
 
 	// GraphQL
 	resolver := graph.NewResolver(svc)
@@ -56,6 +66,12 @@ func main() {
 	mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
 
 	handler := withCORS(mux)
+
+	log.Printf("backend listening on %s", addr)
+    if err := http.ListenAndServe(addr, handler); err != nil {
+        log.Fatal(err)
+    }
+	
 	log.Println("backend listening on :8091")
 	log.Println("GraphiQL playground → http://localhost:8091/playground")
 	if err := http.ListenAndServe(":8091", handler); err != nil {
