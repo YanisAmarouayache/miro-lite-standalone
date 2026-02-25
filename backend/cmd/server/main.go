@@ -29,6 +29,7 @@ func main() {
     addr      := ":" + port
 
     svc := board.NewService(storePath)
+	isProd := os.Getenv("ENV") == "production"
 
 	// GraphQL
 	resolver := graph.NewResolver(svc)
@@ -54,16 +55,19 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// REST (inchangé)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("/api/boards/", svc.HandleBoard)
 
-	// GraphQL
 	mux.Handle("/graphql", gqlSrv)
-	mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
+	if !isProd {
+    gqlSrv.Use(extension.Introspection{})
+    mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
+} else {
+    log.Println("introspection and playground disabled in production")
+}
 
 	handler := withCORS(mux)
 
@@ -71,7 +75,7 @@ func main() {
     if err := http.ListenAndServe(addr, handler); err != nil {
         log.Fatal(err)
     }
-	
+
 	log.Println("backend listening on :8091")
 	log.Println("GraphiQL playground → http://localhost:8091/playground")
 	if err := http.ListenAndServe(":8091", handler); err != nil {
