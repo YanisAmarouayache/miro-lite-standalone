@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
 
 	"miro-lite-standalone/backend/internal/board"
@@ -22,6 +23,7 @@ func main() {
 	// GraphQL
 	resolver := &graph.Resolver{BoardService: svc}
 	gqlSrv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+	gqlSrv.Use(extension.Introspection{})
 	gqlSrv.AddTransport(transport.Options{})
 	gqlSrv.AddTransport(transport.GET{})
 	gqlSrv.AddTransport(transport.POST{})
