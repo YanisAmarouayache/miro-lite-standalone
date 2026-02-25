@@ -21,7 +21,7 @@ func main() {
 	svc := board.NewService("data/boards.json")
 
 	// GraphQL
-	resolver := &graph.Resolver{BoardService: svc}
+	resolver := graph.NewResolver(svc)
 	gqlSrv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	gqlSrv.Use(extension.Introspection{})
 	gqlSrv.AddTransport(transport.Options{})
