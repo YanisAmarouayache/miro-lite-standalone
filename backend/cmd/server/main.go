@@ -16,19 +16,20 @@ import (
 	"miro-lite-standalone/backend/internal/board"
 	"miro-lite-standalone/backend/internal/graph"
 )
+
 func getEnvOrDefault(key, fallback string) string {
-    if v := strings.TrimSpace(os.Getenv(key)); v != "" {
-        return v
-    }
-    return fallback
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return fallback
 }
 
 func main() {
 	storePath := getEnvOrDefault("STORE_PATH", "data/boards.json")
-    port      := getEnvOrDefault("PORT", "8091")
-    addr      := ":" + port
+	port := getEnvOrDefault("PORT", "8091")
+	addr := ":" + port
 
-    svc := board.NewService(storePath)
+	svc := board.NewService(storePath)
 	isProd := os.Getenv("ENV") == "production"
 
 	// GraphQL
@@ -63,18 +64,18 @@ func main() {
 
 	mux.Handle("/graphql", gqlSrv)
 	if !isProd {
-    gqlSrv.Use(extension.Introspection{})
-    mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
-} else {
-    log.Println("introspection and playground disabled in production")
-}
+		gqlSrv.Use(extension.Introspection{})
+		mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
+	} else {
+		log.Println("introspection and playground disabled in production")
+	}
 
 	handler := withCORS(mux)
 
 	log.Printf("backend listening on %s", addr)
-    if err := http.ListenAndServe(addr, handler); err != nil {
-        log.Fatal(err)
-    }
+	if err := http.ListenAndServe(addr, handler); err != nil {
+		log.Fatal(err)
+	}
 
 	log.Println("backend listening on :8091")
 	log.Println("GraphiQL playground → http://localhost:8091/playground")
@@ -89,27 +90,26 @@ func withCORS(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		isAllowedOrigin := origin == "" || allowedOrigins[origin] // ← origin vide = same-server = OK
+		isAllowedOrigin := origin == "" || allowedOrigins[origin]
 
-		if isAllowedOrigin && origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
-		}
-		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,OPTIONS")
-
-		if r.Method == http.MethodOptions {
-			if !isAllowedOrigin {
-				rejectCORS(w, r)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
 		if !isAllowedOrigin {
 			rejectCORS(w, r)
 			return
 		}
+
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+		}
+
+		// Preflight OPTIONS
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+			w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,OPTIONS")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

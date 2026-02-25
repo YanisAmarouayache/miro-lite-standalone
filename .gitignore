@@ -9,5 +9,9 @@ frontend/node_modules/@angular/**
 backend/data/boards.json
 backend/**/boards.json
 backend/**/boards.json.tmp
+**/data/*.json
+backend/cmd/server/data/
+backend/data/
+
 
 **/.DS_Store
