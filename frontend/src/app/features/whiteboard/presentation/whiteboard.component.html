@@ -4,7 +4,6 @@
   [class.is-fullscreen]="fullscreen"
   (wheel)="onShellWheel($event)"
 >
-  <div class="board-title">Board: {{ viewModel.board.id }}</div>
   <p class="error-banner" *ngIf="!viewModel.editable">
     Board is read-only until data is loaded.
   </p>
