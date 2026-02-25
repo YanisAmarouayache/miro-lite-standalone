@@ -31,7 +31,7 @@ input WidgetInput {
   y: Float!
   width: Float!
   height: Float!
-  configJson: String! # config sérialisé en JSON string
+  configJson: String!
 }
 
 type Mutation {

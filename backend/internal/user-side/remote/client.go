@@ -22,7 +22,10 @@ func (c *HTTPRemoteGraphQL) Do(ctx context.Context, query string, variables map[
 		"query":     query,
 		"variables": variables,
 	}
-	b, _ := json.Marshal(body)
+	b, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Endpoint, bytes.NewReader(b))
 	if err != nil {
