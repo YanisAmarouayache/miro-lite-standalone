@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -72,14 +73,18 @@ func (s *Service) ListBoards() []*Model {
 	return result
 }
 
-func (s *Service) CreateBoard(id, title string) *Model {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	b := Model{ID: id, Title: title, Version: 1, Widgets: []Widget{}}
-	s.boards[id] = b
-	_ = s.saveToDisk()
-	return &b
+func (s *Service) CreateBoard(id, title string) (*Model, error) {
+    s.mu.Lock()
+    defer s.mu.Unlock()
+    b := Model{ID: id, Title: title, Version: 1, Widgets: []Widget{}}
+    s.boards[id] = b
+    if err := s.saveToDisk(); err != nil {
+        delete(s.boards, id) // rollback in-memory state
+        return nil, err
+    }
+    return &b, nil
 }
+
 
 func (s *Service) AddWidget(boardID string, widget Widget) (*Widget, error) {
 	s.mu.Lock()
@@ -174,22 +179,25 @@ func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
 }
 
 func (s *Service) loadFromDisk() {
-	if s.storePath == "" {
-		return
-	}
-	content, err := os.ReadFile(s.storePath)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return
-		}
-		return
-	}
-	var persisted map[string]Model
-	if err := json.Unmarshal(content, &persisted); err != nil {
-		return
-	}
-	s.boards = persisted
+    if s.storePath == "" {
+        return
+    }
+    content, err := os.ReadFile(s.storePath)
+    if err != nil {
+        if !errors.Is(err, os.ErrNotExist) {
+            log.Printf("warn: could not read store %q: %v", s.storePath, err)
+        }
+        return
+    }
+    var persisted map[string]Model
+    if err := json.Unmarshal(content, &persisted); err != nil {
+        log.Printf("warn: corrupt store %q, starting empty: %v", s.storePath, err)
+        return
+    }
+    s.boards = persisted
+    log.Printf("loaded %d boards from %s", len(s.boards), s.storePath)
 }
+
 
 func (s *Service) saveToDisk() error {
 	if s.storePath == "" {

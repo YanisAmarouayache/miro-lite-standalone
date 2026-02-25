@@ -48,7 +48,10 @@ type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) CreateBoard(ctx context.Context, title string) (*model.Board, error) {
 	id := fmt.Sprintf("board-%s", uuid.NewString()[:8])
-	b := r.BoardService.CreateBoard(id, title)
+	b, err := r.BoardService.CreateBoard(id, title)
+	if err != nil {
+		return nil, err
+	}
 	r.publishBoardUpdated(b)
 	return boardToGraphQL(b), nil
 }
