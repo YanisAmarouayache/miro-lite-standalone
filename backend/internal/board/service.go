@@ -122,18 +122,27 @@ func (s *Service) HandleBoard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) handleGet(w http.ResponseWriter, id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	board, ok := s.boards[id]
-	if !ok {
-		board = Model{ID: id, Version: 1, Widgets: []Widget{}}
-		s.boards[id] = board
-	}
-	for i := range board.Widgets {
-		normalizeWidget(&board.Widgets[i])
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(board)
+    s.mu.RLock()
+    board, ok := s.boards[id]
+    s.mu.RUnlock()
+
+    if !ok {
+        s.mu.Lock()
+        // Double-check after acquiring write lock
+        if _, stillMissing := s.boards[id]; stillMissing {
+            board = Model{ID: id, Version: 1, Widgets: []Widget{}}
+            s.boards[id] = board
+        } else {
+            board = s.boards[id]
+        }
+        s.mu.Unlock()
+    }
+
+    for i := range board.Widgets {
+        normalizeWidget(&board.Widgets[i])
+    }
+    w.Header().Set("Content-Type", "application/json")
+    _ = json.NewEncoder(w).Encode(board)
 }
 
 func (s *Service) handlePut(w http.ResponseWriter, r *http.Request, id string) {
