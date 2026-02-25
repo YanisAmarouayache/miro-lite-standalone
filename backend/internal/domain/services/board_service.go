@@ -37,10 +37,11 @@ func (s *BoardService) CreateBoard(id, title string) (*model.Board, error) {
 func (s *BoardService) SaveBoard(id string, version int, widgets []model.Widget) (*model.Board, error) {
 	current, ok := s.repo.Get(id)
 	if !ok {
+		// Comportement upsert intentionnel : crée le board s'il n'existe pas encore.
 		current = &model.Board{ID: id, Version: 1, Widgets: []model.Widget{}}
 	}
 	if version != current.Version {
-		return nil, fmt.Errorf("version conflict: expected %d got %d", current.Version, version)
+		return nil, fmt.Errorf("%w: expected %d got %d", model.ErrVersionConflict, current.Version, version)
 	}
 	next := model.Board{
 		ID:      id,

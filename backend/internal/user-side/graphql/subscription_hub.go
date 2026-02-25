@@ -21,13 +21,14 @@ type SubscriptionHub struct {
 	mu          sync.RWMutex
 	nextSubID   int
 	subscribers map[string]map[int]*subscriberEntry
+	unsubscribe func() // unsubscribe du bus — évite les appels sur un hub mort
 }
 
 func NewSubscriptionHub(bus *pubsub.BoardEventBus) *SubscriptionHub {
 	h := &SubscriptionHub{
 		subscribers: make(map[string]map[int]*subscriberEntry),
 	}
-	bus.Subscribe(func(b *domainmodel.Board) {
+	h.unsubscribe = bus.Subscribe(func(b *domainmodel.Board) {
 		h.publish(b.ID, boardToGraphQL(b))
 	})
 	return h
@@ -81,6 +82,10 @@ func (h *SubscriptionHub) Remove(boardID string, subID int) {
 	if len(boardSubs) == 0 {
 		delete(h.subscribers, boardID)
 	}
+}
+
+func (h *SubscriptionHub) Close() {
+	h.unsubscribe()
 }
 
 func (h *SubscriptionHub) publish(boardID string, payload *model.Board) {

@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -49,13 +50,15 @@ func (h *BoardHandler) handleGet(w http.ResponseWriter, id string) {
 }
 
 func (h *BoardHandler) handlePut(w http.ResponseWriter, r *http.Request, id string) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req saveRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "request too large or invalid json", http.StatusBadRequest)
 		return
 	}
 	if _, err := h.svc.SaveBoard(id, req.Version, req.Widgets); err != nil {
-		if strings.Contains(err.Error(), "version conflict") {
+		if errors.Is(err, model.ErrVersionConflict) {
 			http.Error(w, err.Error(), http.StatusConflict)
 			return
 		}

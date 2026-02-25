@@ -10,11 +10,12 @@ type BoardHandler func(board *model.Board)
 
 type BoardEventBus struct {
 	mu       sync.RWMutex
-	handlers []BoardHandler
+	nextID   int
+	handlers map[int]BoardHandler
 }
 
 func NewBoardEventBus() *BoardEventBus {
-	return &BoardEventBus{}
+	return &BoardEventBus{handlers: make(map[int]BoardHandler)}
 }
 
 // Publish implémente domain/interfaces/ports.BoardEventPort
@@ -29,11 +30,12 @@ func (b *BoardEventBus) Publish(board *model.Board) {
 func (b *BoardEventBus) Subscribe(handler BoardHandler) (unsubscribe func()) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	idx := len(b.handlers)
-	b.handlers = append(b.handlers, handler)
+	id := b.nextID
+	b.nextID++
+	b.handlers[id] = handler
 	return func() {
 		b.mu.Lock()
 		defer b.mu.Unlock()
-		b.handlers = append(b.handlers[:idx], b.handlers[idx+1:]...)
+		delete(b.handlers, id)
 	}
 }
