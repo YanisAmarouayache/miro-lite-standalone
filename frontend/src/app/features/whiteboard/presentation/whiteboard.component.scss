@@ -45,7 +45,7 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   display: grid;
   grid-template-rows: 1fr;
   overflow: hidden;
-  color: var(--whiteboard-text);
+  color: var(--whiteboard-text-inverse);
   background: radial-gradient(
       circle at 10% -10%,
       rgba(75, 124, 255, 0.12),

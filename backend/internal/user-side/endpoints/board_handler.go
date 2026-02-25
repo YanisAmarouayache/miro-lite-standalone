@@ -15,8 +15,13 @@ type saveRequest struct {
 	Widgets []model.Widget `json:"widgets"`
 }
 
+type boardService interface {
+    GetBoard(id string) (*model.Board, bool)
+    SaveBoard(id string, version int, widgets []model.Widget) (*model.Board, error)
+}
+
 type BoardHandler struct {
-	svc *services.BoardService
+    svc boardService
 }
 
 func NewBoardHandler(svc *services.BoardService) *BoardHandler {
