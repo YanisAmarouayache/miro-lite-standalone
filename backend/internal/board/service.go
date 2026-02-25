@@ -85,23 +85,6 @@ func (s *Service) CreateBoard(id, title string) (*Model, error) {
     return &b, nil
 }
 
-
-func (s *Service) AddWidget(boardID string, widget Widget) (*Widget, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	b, ok := s.boards[boardID]
-	if !ok {
-		return nil, fmt.Errorf("board %s not found", boardID)
-	}
-	normalizeWidget(&widget)
-	b.Widgets = append(b.Widgets, widget)
-	s.boards[boardID] = b
-	if err := s.saveToDisk(); err != nil {
-		return nil, err
-	}
-	return &widget, nil
-}
-
 func (s *Service) Count() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

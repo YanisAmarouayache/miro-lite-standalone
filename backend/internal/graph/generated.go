@@ -45,26 +45,13 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddStickyNote func(childComplexity int, boardID string, item model.AddStickyNoteInput) int
-		CreateBoard   func(childComplexity int, title string) int
-		SaveBoard     func(childComplexity int, boardID string, version int, widgets []*model.WidgetInput) int
+		CreateBoard func(childComplexity int, title string) int
+		SaveBoard   func(childComplexity int, boardID string, version int, widgets []*model.WidgetInput) int
 	}
 
 	Query struct {
 		Board  func(childComplexity int, id string) int
 		Boards func(childComplexity int) int
-	}
-
-	StickyNote struct {
-		Color    func(childComplexity int) int
-		Height   func(childComplexity int) int
-		ID       func(childComplexity int) int
-		Rotation func(childComplexity int) int
-		Text     func(childComplexity int) int
-		Width    func(childComplexity int) int
-		X        func(childComplexity int) int
-		Y        func(childComplexity int) int
-		ZIndex   func(childComplexity int) int
 	}
 
 	Subscription struct {
@@ -84,7 +71,6 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateBoard(ctx context.Context, title string) (*model.Board, error)
-	AddStickyNote(ctx context.Context, boardID string, item model.AddStickyNoteInput) (*model.StickyNote, error)
 	SaveBoard(ctx context.Context, boardID string, version int, widgets []*model.WidgetInput) (*model.Board, error)
 }
 type QueryResolver interface {
@@ -134,17 +120,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Board.Widgets(childComplexity), true
 
-	case "Mutation.addStickyNote":
-		if e.ComplexityRoot.Mutation.AddStickyNote == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_addStickyNote_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.ComplexityRoot.Mutation.AddStickyNote(childComplexity, args["boardId"].(string), args["item"].(model.AddStickyNoteInput)), true
 	case "Mutation.createBoard":
 		if e.ComplexityRoot.Mutation.CreateBoard == nil {
 			break
@@ -185,61 +160,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Boards(childComplexity), true
-
-	case "StickyNote.color":
-		if e.ComplexityRoot.StickyNote.Color == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Color(childComplexity), true
-	case "StickyNote.height":
-		if e.ComplexityRoot.StickyNote.Height == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Height(childComplexity), true
-	case "StickyNote.id":
-		if e.ComplexityRoot.StickyNote.ID == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.ID(childComplexity), true
-	case "StickyNote.rotation":
-		if e.ComplexityRoot.StickyNote.Rotation == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Rotation(childComplexity), true
-	case "StickyNote.text":
-		if e.ComplexityRoot.StickyNote.Text == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Text(childComplexity), true
-	case "StickyNote.width":
-		if e.ComplexityRoot.StickyNote.Width == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Width(childComplexity), true
-	case "StickyNote.x":
-		if e.ComplexityRoot.StickyNote.X == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.X(childComplexity), true
-	case "StickyNote.y":
-		if e.ComplexityRoot.StickyNote.Y == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.Y(childComplexity), true
-	case "StickyNote.zIndex":
-		if e.ComplexityRoot.StickyNote.ZIndex == nil {
-			break
-		}
-
-		return e.ComplexityRoot.StickyNote.ZIndex(childComplexity), true
 
 	case "Subscription.boardUpdated":
 		if e.ComplexityRoot.Subscription.BoardUpdated == nil {
@@ -304,7 +224,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputAddStickyNoteInput,
 		ec.unmarshalInputWidgetInput,
 	)
 	first := true
@@ -416,22 +335,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
-
-func (ec *executionContext) field_Mutation_addStickyNote_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "boardId", ec.unmarshalNID2string)
-	if err != nil {
-		return nil, err
-	}
-	args["boardId"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "item", ec.unmarshalNAddStickyNoteInput2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐAddStickyNoteInput)
-	if err != nil {
-		return nil, err
-	}
-	args["item"] = arg1
-	return args, nil
-}
 
 func (ec *executionContext) field_Mutation_createBoard_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
@@ -733,67 +636,6 @@ func (ec *executionContext) fieldContext_Mutation_createBoard(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_addStickyNote(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_Mutation_addStickyNote,
-		func(ctx context.Context) (any, error) {
-			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().AddStickyNote(ctx, fc.Args["boardId"].(string), fc.Args["item"].(model.AddStickyNoteInput))
-		},
-		nil,
-		ec.marshalNStickyNote2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐStickyNote,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_Mutation_addStickyNote(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_StickyNote_id(ctx, field)
-			case "x":
-				return ec.fieldContext_StickyNote_x(ctx, field)
-			case "y":
-				return ec.fieldContext_StickyNote_y(ctx, field)
-			case "width":
-				return ec.fieldContext_StickyNote_width(ctx, field)
-			case "height":
-				return ec.fieldContext_StickyNote_height(ctx, field)
-			case "rotation":
-				return ec.fieldContext_StickyNote_rotation(ctx, field)
-			case "zIndex":
-				return ec.fieldContext_StickyNote_zIndex(ctx, field)
-			case "text":
-				return ec.fieldContext_StickyNote_text(ctx, field)
-			case "color":
-				return ec.fieldContext_StickyNote_color(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type StickyNote", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_addStickyNote_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Mutation_saveBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1038,267 +880,6 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_id(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_id,
-		func(ctx context.Context) (any, error) {
-			return obj.ID, nil
-		},
-		nil,
-		ec.marshalNID2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_x(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_x,
-		func(ctx context.Context) (any, error) {
-			return obj.X, nil
-		},
-		nil,
-		ec.marshalNFloat2float64,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_x(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_y(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_y,
-		func(ctx context.Context) (any, error) {
-			return obj.Y, nil
-		},
-		nil,
-		ec.marshalNFloat2float64,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_y(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_width(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_width,
-		func(ctx context.Context) (any, error) {
-			return obj.Width, nil
-		},
-		nil,
-		ec.marshalOFloat2ᚖfloat64,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_width(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_height(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_height,
-		func(ctx context.Context) (any, error) {
-			return obj.Height, nil
-		},
-		nil,
-		ec.marshalOFloat2ᚖfloat64,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_height(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_rotation(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_rotation,
-		func(ctx context.Context) (any, error) {
-			return obj.Rotation, nil
-		},
-		nil,
-		ec.marshalOFloat2ᚖfloat64,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_rotation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Float does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_zIndex(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_zIndex,
-		func(ctx context.Context) (any, error) {
-			return obj.ZIndex, nil
-		},
-		nil,
-		ec.marshalOInt2ᚖint,
-		true,
-		false,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_zIndex(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_text(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_text,
-		func(ctx context.Context) (any, error) {
-			return obj.Text, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_text(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _StickyNote_color(ctx context.Context, field graphql.CollectedField, obj *model.StickyNote) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		ec.fieldContext_StickyNote_color,
-		func(ctx context.Context) (any, error) {
-			return obj.Color, nil
-		},
-		nil,
-		ec.marshalNString2string,
-		true,
-		true,
-	)
-}
-
-func (ec *executionContext) fieldContext_StickyNote_color(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "StickyNote",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3004,53 +2585,6 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputAddStickyNoteInput(ctx context.Context, obj any) (model.AddStickyNoteInput, error) {
-	var it model.AddStickyNoteInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"x", "y", "text", "color"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "x":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("x"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.X = data
-		case "y":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("y"))
-			data, err := ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Y = data
-		case "text":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Text = data
-		case "color":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Color = data
-		}
-	}
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputWidgetInput(ctx context.Context, obj any) (model.WidgetInput, error) {
 	var it model.WidgetInput
 	asMap := map[string]any{}
@@ -3207,13 +2741,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "addStickyNote":
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addStickyNote(ctx, field)
-			})
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "saveBoard":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_saveBoard(ctx, field)
@@ -3312,73 +2839,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.Deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var stickyNoteImplementors = []string{"StickyNote"}
-
-func (ec *executionContext) _StickyNote(ctx context.Context, sel ast.SelectionSet, obj *model.StickyNote) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, stickyNoteImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("StickyNote")
-		case "id":
-			out.Values[i] = ec._StickyNote_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "x":
-			out.Values[i] = ec._StickyNote_x(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "y":
-			out.Values[i] = ec._StickyNote_y(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "width":
-			out.Values[i] = ec._StickyNote_width(ctx, field, obj)
-		case "height":
-			out.Values[i] = ec._StickyNote_height(ctx, field, obj)
-		case "rotation":
-			out.Values[i] = ec._StickyNote_rotation(ctx, field, obj)
-		case "zIndex":
-			out.Values[i] = ec._StickyNote_zIndex(ctx, field, obj)
-		case "text":
-			out.Values[i] = ec._StickyNote_text(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "color":
-			out.Values[i] = ec._StickyNote_color(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3826,11 +3286,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAddStickyNoteInput2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐAddStickyNoteInput(ctx context.Context, v any) (model.AddStickyNoteInput, error) {
-	res, err := ec.unmarshalInputAddStickyNoteInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNBoard2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v model.Board) graphql.Marshaler {
 	return ec._Board(ctx, sel, &v)
 }
@@ -3923,20 +3378,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNStickyNote2miroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐStickyNote(ctx context.Context, sel ast.SelectionSet, v model.StickyNote) graphql.Marshaler {
-	return ec._StickyNote(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNStickyNote2ᚖmiroᚑliteᚑstandaloneᚋbackendᚋinternalᚋgraphᚋmodelᚐStickyNote(ctx context.Context, sel ast.SelectionSet, v *model.StickyNote) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._StickyNote(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
@@ -4176,41 +3617,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = sel
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	res := graphql.MarshalFloatContext(*v)
-	return graphql.WrapContextMarshaler(ctx, res)
-}
-
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalInt(*v)
 	return res
 }
 

@@ -56,29 +56,6 @@ func (r *mutationResolver) CreateBoard(ctx context.Context, title string) (*mode
 	return boardToGraphQL(b), nil
 }
 
-func (r *mutationResolver) AddStickyNote(ctx context.Context, boardID string, item model.AddStickyNoteInput) (*model.StickyNote, error) {
-	color := "yellow"
-	if item.Color != nil && *item.Color != "" {
-		color = *item.Color
-	}
-	w, err := r.BoardService.AddWidget(boardID, board.Widget{
-		ID:     fmt.Sprintf("widget-%s", uuid.NewString()[:8]),
-		Type:   "text",
-		X:      item.X,
-		Y:      item.Y,
-		Config: map[string]interface{}{"text": item.Text, "color": color},
-	})
-	if err != nil {
-		return nil, err
-	}
-	if b, ok := r.BoardService.GetBoard(boardID); ok {
-		r.publishBoardUpdated(b)
-	}
-	text, _ := w.Config["text"].(string)
-	col, _ := w.Config["color"].(string)
-	return &model.StickyNote{ID: w.ID, X: w.X, Y: w.Y, Text: text, Color: col}, nil
-}
-
 func (r *mutationResolver) SaveBoard(ctx context.Context, boardID string, version int, widgets []*model.WidgetInput) (*model.Board, error) {
 	boardWidgets := make([]board.Widget, 0, len(widgets))
 	for _, w := range widgets {

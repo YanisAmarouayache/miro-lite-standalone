@@ -2,13 +2,6 @@
 
 package model
 
-type AddStickyNoteInput struct {
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Text  string  `json:"text"`
-	Color *string `json:"color,omitempty"`
-}
-
 type Board struct {
 	ID      string           `json:"id"`
 	Title   string           `json:"title"`
@@ -20,18 +13,6 @@ type Mutation struct {
 }
 
 type Query struct {
-}
-
-type StickyNote struct {
-	ID       string   `json:"id"`
-	X        float64  `json:"x"`
-	Y        float64  `json:"y"`
-	Width    *float64 `json:"width,omitempty"`
-	Height   *float64 `json:"height,omitempty"`
-	Rotation *float64 `json:"rotation,omitempty"`
-	ZIndex   *int     `json:"zIndex,omitempty"`
-	Text     string   `json:"text"`
-	Color    string   `json:"color"`
 }
 
 type Subscription struct {
