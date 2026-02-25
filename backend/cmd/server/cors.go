@@ -2,14 +2,10 @@ package main
 
 import (
 	"net/http"
-	"os"
 	"strings"
 )
 
-func withCORS(next http.Handler) http.Handler {
-	allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
-	allowedHeaders := parseAllowedHeaders(os.Getenv("ALLOWED_HEADERS"))
-
+func withCORS(next http.Handler, allowedOrigins map[string]bool, allowedHeaders string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 		isAllowedOrigin := origin == "" || allowedOrigins[origin]
@@ -64,7 +60,7 @@ func parseAllowedHeaders(raw string) string {
 		return defaultHeaders
 	}
 	seen := make(map[string]bool)
-	headers := make([]string, 0)
+	var headers []string
 	for _, value := range strings.Split(raw, ",") {
 		header := strings.TrimSpace(value)
 		if header == "" {

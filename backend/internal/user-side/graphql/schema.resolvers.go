@@ -1,8 +1,5 @@
 package graphql
 
-// Ce fichier est géré conjointement par gqlgen (stubs) et toi (implémentations).
-// Ne pas supprimer les lignes générées en bas du fichier.
-
 import (
 	"context"
 	"encoding/json"
@@ -15,7 +12,7 @@ import (
 )
 
 func (r *mutationResolver) CreateBoard(ctx context.Context, title string) (*model.Board, error) {
-	id := fmt.Sprintf("board-%s", uuid.NewString()[:8])
+	id := fmt.Sprintf("board-%s", uuid.NewString()) // UUID complet, plus de troncature
 	b, err := r.BoardService.CreateBoard(id, title)
 	if err != nil {
 		return nil, err
@@ -28,7 +25,7 @@ func (r *mutationResolver) SaveBoard(ctx context.Context, boardID string, versio
 	for _, w := range widgets {
 		var config map[string]interface{}
 		if err := json.Unmarshal([]byte(w.ConfigJSON), &config); err != nil {
-			config = map[string]interface{}{}
+			return nil, fmt.Errorf("invalid configJson for widget %q: %w", w.ID, err) // erreur explicite
 		}
 		domainWidgets = append(domainWidgets, domainmodel.Widget{
 			ID: w.ID, Type: w.Type,
@@ -69,8 +66,6 @@ func (r *subscriptionResolver) BoardUpdated(ctx context.Context, boardID string)
 	}()
 	return out, nil
 }
-
-// ─── Lignes gérées par gqlgen — ne pas modifier ───────────────────────────────
 
 func (r *Resolver) Mutation() MutationResolver         { return &mutationResolver{r} }
 func (r *Resolver) Query() QueryResolver               { return &queryResolver{r} }

@@ -52,11 +52,21 @@ func (r *BoardJSONRepository) List() []*model.Board {
 func (r *BoardJSONRepository) Save(board model.Board) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+
+	previous, hadPrevious := r.boards[board.ID]
 	r.boards[board.ID] = board
-	return r.saveToDisk()
+
+	if err := r.saveToDisk(); err != nil {
+		if hadPrevious {
+			r.boards[board.ID] = previous
+		} else {
+			delete(r.boards, board.ID)
+		}
+		return err
+	}
+	return nil
 }
 
-// sanitize garantit que Config n'est jamais nil (données legacy ou JSON malformé)
 func sanitize(b *model.Board) {
 	for i := range b.Widgets {
 		if b.Widgets[i].Config == nil {
