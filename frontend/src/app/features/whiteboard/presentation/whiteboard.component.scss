@@ -10,12 +10,29 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   --whiteboard-surface: #ffffff;
   --whiteboard-surface-soft: #f8faff;
   --whiteboard-border: #dbe4f0;
-  --whiteboard-border-strong: #c8d6ea;
   --whiteboard-text: #1f2a44;
+  --whiteboard-text-inverse: #e2e8f0;
   --whiteboard-muted: #60718f;
   --whiteboard-accent: #4b7cff;
   --whiteboard-accent-soft: rgba(75, 124, 255, 0.2);
   --whiteboard-danger: #c7354a;
+  --whiteboard-surface-1: #1e2530;
+  --whiteboard-surface-2: #252b38;
+  --whiteboard-surface-gradient: linear-gradient(
+    135deg,
+    #1e2530 0%,
+    #252b38 100%
+  );
+  --whiteboard-border-rail: rgba(66, 153, 225, 0.2);
+  --whiteboard-border-strong: rgba(66, 153, 225, 0.3);
+  --whiteboard-border-hover: rgba(66, 153, 225, 0.5);
+  --whiteboard-fill: rgba(66, 153, 225, 0.3);
+  --whiteboard-fill-hover: rgba(66, 153, 225, 0.45);
+  --whiteboard-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --whiteboard-shadow-hover: 0 4px 12px rgba(66, 153, 225, 0.2);
+  --whiteboard-indicator: #2f6bff;
+  --whiteboard-indicator-glow: rgba(47, 107, 255, 0.55);
+  --whiteboard-indicator-ring: rgba(255, 255, 255, 0.95);
 }
 
 :host,
@@ -29,25 +46,12 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   grid-template-rows: 1fr;
   overflow: hidden;
   color: var(--whiteboard-text);
-  background:
-    radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%),
+  background: radial-gradient(
+      circle at 10% -10%,
+      rgba(75, 124, 255, 0.12),
+      transparent 28%
+    ),
     var(--whiteboard-bg);
-}
-
-.board-title {
-  position: fixed;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 10px;
-  border: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  color: #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  font-weight: 600;
-  font-size: 13px;
-  z-index: 20;
 }
 
 .board-layout {
@@ -66,9 +70,9 @@ app-widget-canvas {
   top: 12px;
   right: 12px;
   width: 320px;
-  border: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--whiteboard-border-rail);
+  background: var(--whiteboard-surface-gradient);
+  box-shadow: var(--whiteboard-shadow);
   padding: 12px;
   display: grid;
   align-content: start;
@@ -86,27 +90,27 @@ app-widget-canvas {
   flex-direction: column;
   gap: 8px;
   padding: 10px;
-  border: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  border: 1px solid var(--whiteboard-border-rail);
+  background: var(--whiteboard-surface-gradient);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--whiteboard-shadow);
   z-index: 20;
 }
 
 .widgets-rail button {
-  border: 1px solid rgba(66, 153, 225, 0.3);
+  border: 1px solid var(--whiteboard-border-strong);
   border-radius: 6px;
-  background: rgba(66, 153, 225, 0.3);
-  color: #e2e8f0;
+  background: var(--whiteboard-fill);
+  color: var(--whiteboard-text-inverse);
   padding: 6px 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .widgets-rail button:hover {
-  border-color: rgba(66, 153, 225, 0.5);
-  background: rgba(66, 153, 225, 0.45);
-  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+  border-color: var(--whiteboard-border-hover);
+  background: var(--whiteboard-fill-hover);
+  box-shadow: var(--whiteboard-shadow-hover);
   transform: translateY(-1px);
 }
 
@@ -121,27 +125,27 @@ app-widget-canvas {
   display: flex;
   gap: 8px;
   padding: 8px;
-  border: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
+  border: 1px solid var(--whiteboard-border-rail);
+  background: var(--whiteboard-surface-gradient);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--whiteboard-shadow);
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .zoom-toolbar button {
-  border: 1px solid rgba(66, 153, 225, 0.3);
+  border: 1px solid var(--whiteboard-border-strong);
   border-radius: 6px;
-  background: rgba(66, 153, 225, 0.3);
-  color: #e2e8f0;
+  background: var(--whiteboard-fill);
+  color: var(--whiteboard-text-inverse);
   padding: 6px 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .zoom-toolbar button:hover {
-  border-color: rgba(66, 153, 225, 0.5);
-  background: rgba(66, 153, 225, 0.45);
-  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+  border-color: var(--whiteboard-border-hover);
+  background: var(--whiteboard-fill-hover);
+  box-shadow: var(--whiteboard-shadow-hover);
   transform: translateY(-1px);
 }
 

@@ -1,7 +1,16 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { WidgetModel } from '../../../domain/board.model';
+import { CommonModule } from "@angular/common";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  Output,
+  ViewChild,
+} from "@angular/core";
+import { FormsModule } from "@angular/forms";
+import { WidgetModel } from "../../../domain/board.model";
 import {
   ResizeDirection,
   WidgetDropEvent,
@@ -13,20 +22,25 @@ import {
 } from "../../models/widget-interaction.model";
 
 @Component({
-    selector: 'app-widget-canvas',
-    standalone: true,
-    imports: [CommonModule, FormsModule],
-    templateUrl: './widget-canvas.component.html',
-    styleUrl: './widget-canvas.component.css',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: "app-widget-canvas",
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: "./widget-canvas.component.html",
+  styleUrl: "./widget-canvas.component.scss",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WidgetCanvasComponent {
-  private pendingEditableDrag?: { widgetId: string; startX: number; startY: number };
+  private pendingEditableDrag?: {
+    widgetId: string;
+    startX: number;
+    startY: number;
+  };
   private readonly dragThreshold = 6;
 
-  @ViewChild('canvasRoot') private canvasRoot?: ElementRef<HTMLDivElement>;
+  @ViewChild("canvasRoot") private canvasRoot?: ElementRef<HTMLDivElement>;
   @Input({ required: true }) widgets: WidgetModel[] = [];
-  @Input({ required: true }) frameOverrides: ReadonlyMap<string, WidgetFrame> = new Map();
+  @Input({ required: true }) frameOverrides: ReadonlyMap<string, WidgetFrame> =
+    new Map();
   @Input() selectedWidgetId: string | null = null;
   @Input() zoom = 1;
   @Input() editable = true;
@@ -76,28 +90,28 @@ export class WidgetCanvasComponent {
     if (widget.type === "text" || widget.type === "textarea") {
       return widget.config.text;
     }
-    return '';
+    return "";
   }
 
   chartType(widget: WidgetModel): string {
     if (widget.type === "chart") {
       return widget.config.chartType;
     }
-    return 'pie';
+    return "pie";
   }
 
   imageSrc(widget: WidgetModel): string {
     if (widget.type === "image") {
       return widget.config.src;
     }
-    return '';
+    return "";
   }
 
   imageAlt(widget: WidgetModel): string {
     if (widget.type === "image") {
       return widget.config.alt;
     }
-    return 'Imported image';
+    return "Imported image";
   }
 
   counterValue(widget: WidgetModel): number {
@@ -111,7 +125,7 @@ export class WidgetCanvasComponent {
     if (widget.type === "counter") {
       return widget.config.label;
     }
-    return 'Metric';
+    return "Metric";
   }
 
   onWidgetContextMenu(widgetId: string, event: MouseEvent): void {
@@ -124,8 +138,13 @@ export class WidgetCanvasComponent {
     if (event.button !== 0) return;
     if (!this.isSelected(widgetId)) return;
     const target = event.target as HTMLElement | null;
-    if (target?.closest('.resize-handle')) return;
-    if (target?.closest('textarea, input, select, button, [contenteditable="true"]')) return;
+    if (target?.closest(".resize-handle")) return;
+    if (
+      target?.closest(
+        'textarea, input, select, button, [contenteditable="true"]'
+      )
+    )
+      return;
     this.startDrag.emit({ widgetId, event });
   }
 
@@ -136,11 +155,11 @@ export class WidgetCanvasComponent {
     this.pendingEditableDrag = {
       widgetId,
       startX: event.clientX,
-      startY: event.clientY
+      startY: event.clientY,
     };
   }
 
-  @HostListener('document:mousemove', ['$event'])
+  @HostListener("document:mousemove", ["$event"])
   onDocumentMouseMove(event: MouseEvent): void {
     if (!this.editable) return;
     if (!this.pendingEditableDrag) return;
@@ -158,7 +177,7 @@ export class WidgetCanvasComponent {
     this.pendingEditableDrag = undefined;
   }
 
-  @HostListener('document:mouseup')
+  @HostListener("document:mouseup")
   onDocumentMouseUp(): void {
     this.pendingEditableDrag = undefined;
   }
@@ -177,7 +196,7 @@ export class WidgetCanvasComponent {
     if (!this.canAcceptWidgetDrop(event)) return;
     event.preventDefault();
     if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'copy';
+      event.dataTransfer.dropEffect = "copy";
     }
   }
 
@@ -189,7 +208,7 @@ export class WidgetCanvasComponent {
     this.widgetDrop.emit({
       widgetType,
       clientX: event.clientX,
-      clientY: event.clientY
+      clientY: event.clientY,
     });
   }
 
@@ -202,7 +221,7 @@ export class WidgetCanvasComponent {
     if (!dt) return null;
     const typeFromMime = dt.getData(WIDGET_TYPE_DRAG_MIME);
     if (typeFromMime) return typeFromMime;
-    const typeFromText = dt.getData('text/plain');
+    const typeFromText = dt.getData("text/plain");
     return typeFromText || null;
   }
 
@@ -210,6 +229,8 @@ export class WidgetCanvasComponent {
     const dt = event.dataTransfer;
     if (!dt) return false;
     const types = Array.from(dt.types ?? []);
-    return types.includes(WIDGET_TYPE_DRAG_MIME) || types.includes('text/plain');
+    return (
+      types.includes(WIDGET_TYPE_DRAG_MIME) || types.includes("text/plain")
+    );
   }
 }

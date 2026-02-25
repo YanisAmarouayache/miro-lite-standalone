@@ -7,19 +7,19 @@
 }
 
 button {
-  border: 1px solid rgba(66, 153, 225, 0.3);
+  border: 1px solid var(--whiteboard-border-strong);
   border-radius: 6px;
-  background: rgba(66, 153, 225, 0.12);
-  color: #e2e8f0;
+  background: var(--whiteboard-fill);
+  color: var(--whiteboard-text-inverse);
   padding: 7px 9px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 button:hover {
-  border-color: rgba(66, 153, 225, 0.5);
-  background: rgba(66, 153, 225, 0.2);
-  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
+  border-color: var(--whiteboard-border-hover);
+  background: var(--whiteboard-fill-hover);
+  box-shadow: var(--whiteboard-shadow-hover);
   transform: translateY(-1px);
 }
 
