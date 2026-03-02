@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Input, On
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
+import { WidgetDefinition } from '../domain/widget-definition.model';
 import {
   LayerListComponent,
 } from './components/layer-list/layer-list.component';
@@ -50,6 +51,8 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     }))
   );
   readonly availableWidgets = this.facade.availableWidgets;
+  readonly widgetGroups = this.buildWidgetGroups(this.availableWidgets);
+  readonly expandedWidgetGroups = new Set<string>(this.widgetGroups.map((group) => group.id));
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   fullscreen = false;
   get zoom(): number {
@@ -164,6 +167,42 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.zoomState.destroy();
     this.facade.destroy();
+  }
+
+  toggleWidgetGroup(groupId: string): void {
+    if (this.expandedWidgetGroups.has(groupId)) {
+      this.expandedWidgetGroups.delete(groupId);
+      return;
+    }
+    this.expandedWidgetGroups.add(groupId);
+  }
+
+  isWidgetGroupExpanded(groupId: string): boolean {
+    return this.expandedWidgetGroups.has(groupId);
+  }
+
+  private buildWidgetGroups(widgets: WidgetDefinition[]): Array<{ id: string; title: string; widgets: WidgetDefinition[] }> {
+    const groups: Record<string, WidgetDefinition[]> = {
+      data: [],
+      content: [],
+      media: [],
+    };
+
+    widgets.forEach((widget) => {
+      if (widget.type === 'chart' || widget.type === 'table' || widget.type === 'counter') {
+        groups['data'].push(widget);
+      } else if (widget.type === 'text' || widget.type === 'textarea') {
+        groups['content'].push(widget);
+      } else {
+        groups['media'].push(widget);
+      }
+    });
+
+    return [
+      { id: 'data', title: 'Data', widgets: groups['data'] },
+      { id: 'content', title: 'Content', widgets: groups['content'] },
+      { id: 'media', title: 'Media', widgets: groups['media'] },
+    ].filter((group) => group.widgets.length > 0);
   }
 
 }

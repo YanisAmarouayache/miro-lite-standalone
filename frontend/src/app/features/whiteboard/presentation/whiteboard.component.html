@@ -76,18 +76,48 @@
 
   <app-widget-context-menu [menu]="contextMenu" (action)="ui.onContextMenuAction($event, viewModel.editable)"></app-widget-context-menu>
 
-  <div class="widgets-rail">
-    <button
-      type="button"
-      *ngFor="let definition of availableWidgets"
-      [disabled]="!viewModel.editable"
-      draggable="true"
-      (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
-      (click)="ui.addWidget(definition.type, viewModel.editable)"
-    >
-      + {{ definition.name }}
-    </button>
-  </div>
+  <aside class="widgets-rail layers-panel">
+    <header class="panel-header">
+      <span class="panel-header-icon">◫</span>
+      <h2 class="panel-title">Widgets</h2>
+    </header>
+
+    <div class="layers-panel-container">
+      <div class="layers-section widgets-rail-list">
+        <div class="widget-group" *ngFor="let group of widgetGroups">
+          <button
+            type="button"
+            class="widgets-rail-item widget-group-header overlay-item"
+            (click)="toggleWidgetGroup(group.id)"
+            [attr.aria-expanded]="isWidgetGroupExpanded(group.id)"
+          >
+            <span class="accordion-header-bar" aria-hidden="true"></span>
+            <span class="widget-group-title">{{ group.title }}</span>
+            <span class="widget-group-chevron">{{ isWidgetGroupExpanded(group.id) ? '▾' : '▸' }}</span>
+          </button>
+
+          <div class="widget-group-content" *ngIf="isWidgetGroupExpanded(group.id)">
+            <button
+              type="button"
+              class="widgets-rail-item overlay-item"
+              *ngFor="let definition of group.widgets"
+              [disabled]="!viewModel.editable"
+              draggable="true"
+              (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
+              (click)="ui.addWidget(definition.type, viewModel.editable)"
+            >
+              <div class="item-content-left">
+                <div class="item-main-icon-wrapper">
+                  <span class="item-icon">+</span>
+                </div>
+                <span class="item-name">{{ definition.name }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
 
   <div class="zoom-toolbar-wrapper">
     <div class="zoom-toolbar">
