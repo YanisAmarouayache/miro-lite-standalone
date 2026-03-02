@@ -53,6 +53,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   readonly availableWidgets = this.facade.availableWidgets;
   readonly widgetGroups = this.buildWidgetGroups(this.availableWidgets);
   readonly expandedWidgetGroups = new Set<string>(this.widgetGroups.map((group) => group.id));
+  leftPanelTab: 'widgets' | 'layers' = 'widgets';
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
   fullscreen = false;
   get zoom(): number {
@@ -130,7 +131,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
       this.exitFullscreen();
       return;
     }
-    this.contextMenuState.close();
+    this.ui.clearSelection();
   }
 
   @HostListener('document:click')
@@ -179,6 +180,10 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   isWidgetGroupExpanded(groupId: string): boolean {
     return this.expandedWidgetGroups.has(groupId);
+  }
+
+  selectLeftPanelTab(tab: 'widgets' | 'layers'): void {
+    this.leftPanelTab = tab;
   }
 
   private buildWidgetGroups(widgets: WidgetDefinition[]): Array<{ id: string; title: string; widgets: WidgetDefinition[] }> {

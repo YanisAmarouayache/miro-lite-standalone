@@ -94,17 +94,20 @@ app-widget-canvas {
 
 .side-panel {
   position: fixed;
-  top: 12px;
+  top: calc(12px + #{$whiteboard-top-offset});
   right: 12px;
-  width: 320px;
-  border: 1px solid var(--whiteboard-border-rail);
-  background: var(--whiteboard-surface-gradient);
-  box-shadow: var(--whiteboard-shadow);
-  padding: 12px;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  border-radius: 10px;
+  width: 300px;
+  height: calc(100vh - 24px - #{$whiteboard-top-offset});
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--theme-toolbar-color, #ffffff);
+  background: var(--theme-toolbar-background-color, rgba(18, 20, 26, 0.85));
+  border-radius: $toolbar-border-radius;
+  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  backdrop-filter: blur(2px);
+  box-shadow: $toolbar-box-shadow;
+  padding: 10px;
   z-index: 20;
 }
 
@@ -139,36 +142,41 @@ app-widget-canvas {
 .panel-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 10px 12px;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background-color: transparent;
 }
 
-.panel-header-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 8px;
-  font-size: 14px;
-  line-height: 1;
+.left-panel-tab {
+  flex: 1 1 auto;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-section-header-border);
+  background: var(--theme-section-header-background);
   color: var(--theme-toolbar-color, #ffffff);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.panel-title {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--theme-toolbar-color, #ffffff);
-  line-height: 1.2;
+.left-panel-tab:hover {
+  background: var(--theme-section-header-background-hover);
+}
+
+.left-panel-tab.active {
+  background: var(--theme-toolbar-background-color-active, #2566e2);
+  border-color: var(--theme-toolbar-background-color-active, #2566e2);
+  color: var(--theme-toolbar-button-color-hover, #ffffff);
 }
 
 .layers-panel-container {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  min-height: 0;
   padding: 10px;
 }
 
@@ -177,6 +185,18 @@ app-widget-canvas {
   flex-direction: column;
   width: 100%;
   gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.left-tab-content {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.left-tab-content-layers {
+  padding-right: 2px;
 }
 
 .widget-group {
@@ -311,40 +331,52 @@ app-widget-canvas {
 .zoom-toolbar-wrapper {
   position: fixed;
   right: 16px;
-  bottom: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 20;
 }
 
 .zoom-toolbar {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 12px;
   padding: 8px;
-  border: 1px solid var(--whiteboard-border-rail);
-  background: var(--whiteboard-surface-gradient);
-  border-radius: 10px;
-  box-shadow: var(--whiteboard-shadow);
+  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  background: var(--theme-toolbar-background-color, rgba(18, 20, 26, 0.85));
+  border-radius: $toolbar-border-radius;
+  box-shadow: $toolbar-box-shadow;
+  backdrop-filter: blur(2px);
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .zoom-toolbar button {
-  border: 1px solid var(--whiteboard-border-strong);
-  border-radius: 6px;
-  background: var(--whiteboard-fill);
-  color: var(--whiteboard-text-inverse);
-  padding: 6px 10px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  border-radius: $toolbar-border-radius;
+  background: var(--theme-section-header-background);
+  color: var(--theme-toolbar-color, #ffffff);
+  padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .zoom-toolbar button:hover {
-  border-color: var(--whiteboard-border-hover);
-  background: var(--whiteboard-fill-hover);
-  box-shadow: var(--whiteboard-shadow-hover);
-  transform: translateY(-1px);
+  border-color: var(--theme-section-header-border);
+  background: var(--theme-section-header-background-hover);
 }
 
 .zoom-toolbar .fullscreen-toggle {
-  min-width: 56px;
+  width: 36px;
+  min-width: 36px;
+  font-size: 10px;
+}
+
+.whiteboard-shell.has-right-panel .zoom-toolbar-wrapper {
+  right: calc(16px + 300px + 12px);
 }
 
 .whiteboard-shell.is-fullscreen .zoom-toolbar {
