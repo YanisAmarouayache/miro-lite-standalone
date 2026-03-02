@@ -1,5 +1,34 @@
-.selected-title { font-weight: 700; margin: 0; }
-.layer-label { margin: 0; color: var(--whiteboard-muted); font-size: 12px; }
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  color: var(--theme-toolbar-color, #ffffff);
+  font-family: sans-serif;
+}
+
+h4 {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--theme-section-header-border);
+  color: var(--theme-toolbar-color, #ffffff);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.selected-title {
+  font-weight: 700;
+  margin: 0;
+  color: var(--theme-toolbar-color, #ffffff);
+}
+
+.layer-label {
+  margin: 0;
+  color: var(--theme-toolbar-color-disabled, #999999);
+  font-size: 12px;
+}
+
 .layer-actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -7,30 +36,35 @@
 }
 
 button {
-  border: 1px solid var(--whiteboard-border-strong);
+  border: 1px solid var(--theme-section-header-border);
   border-radius: 6px;
-  background: var(--whiteboard-fill);
-  color: var(--whiteboard-text-inverse);
+  background: var(--theme-section-header-background);
+  color: var(--theme-toolbar-color, #ffffff);
   padding: 7px 9px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 32px;
 }
 
 button:hover {
-  border-color: var(--whiteboard-border-hover);
-  background: var(--whiteboard-fill-hover);
-  box-shadow: var(--whiteboard-shadow-hover);
-  transform: translateY(-1px);
+  border-color: var(--theme-section-header-border);
+  background: var(--theme-section-header-background-hover);
 }
 
-.control-row { display: grid; gap: 6px; }
+.control-row {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--theme-toolbar-color, #ffffff);
+}
+
 .control-row input,
 .control-row textarea,
 .control-row select {
-  border: 1px solid var(--whiteboard-border);
+  border: 1px solid var(--theme-section-header-border);
   border-radius: 6px;
-  background: var(--whiteboard-surface);
-  color: var(--whiteboard-text);
+  background: var(--theme-toolbar-background-color);
+  color: var(--theme-toolbar-color, #ffffff);
   padding: 8px;
 }
 
@@ -38,6 +72,19 @@ button:hover {
 .control-row textarea:focus,
 .control-row select:focus {
   outline: none;
-  border-color: var(--whiteboard-accent);
-  box-shadow: 0 0 0 3px var(--whiteboard-accent-soft);
+  border-color: var(--theme-toolbar-background-color-active, #2566e2);
+  box-shadow: 0 0 0 2px rgba(37, 102, 226, 0.3);
+}
+
+.control-row textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+button:disabled,
+.control-row input:disabled,
+.control-row textarea:disabled,
+.control-row select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
