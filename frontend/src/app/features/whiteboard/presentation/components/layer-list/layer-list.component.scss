@@ -1,15 +1,15 @@
 .layer-list {
   display: grid;
-  gap: 10px;
-  max-height: 220px;
+  gap: 6px;
+  max-height: 100%;
   overflow: auto;
 }
 
 h4 {
   margin: 0 0 6px 0;
-  color: var(--whiteboard-text-inverse);
+  color: var(--theme-toolbar-color);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.2px;
 }
 
@@ -20,26 +20,23 @@ h4 {
   align-items: center;
   text-align: left;
   font-size: 12px;
-  border: 1px solid var(--whiteboard-border-strong);
+  border: 1px solid var(--theme-section-header-border);
   border-radius: 6px;
-  background: var(--whiteboard-fill);
-  color: var(--whiteboard-text-inverse);
+  background: var(--theme-section-header-background);
+  color: var(--theme-toolbar-color);
   padding: 7px 9px;
   overflow: hidden;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease,
-    background-color 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .layer-item:hover {
-  border-color: var(--whiteboard-border-hover);
-  background: var(--whiteboard-fill-hover);
-  box-shadow: var(--whiteboard-shadow-hover);
-  transform: translateY(-1px);
+  border-color: var(--theme-section-header-border);
+  background: var(--theme-section-header-background-hover);
 }
 
 .layer-item-selected {
-  border-color: var(--whiteboard-border-hover);
-  box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.25);
+  border-color: var(--theme-toolbar-background-color-active);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-toolbar-background-color-active) 25%, transparent);
 }
 
 .layer-item-dragging {
@@ -47,7 +44,7 @@ h4 {
 }
 
 .layer-item-drop-target {
-  border-color: var(--whiteboard-border-hover);
+  border-color: var(--theme-toolbar-background-color-active);
 }
 
 .layer-item-drop-target::before {
@@ -57,10 +54,10 @@ h4 {
   right: -2px;
   top: -5px;
   height: 4px;
-  background: var(--whiteboard-indicator);
+  background: var(--theme-toolbar-background-color-active);
   border-radius: 999px;
   box-shadow: 0 0 0 1px var(--whiteboard-indicator-ring),
-    0 0 10px var(--whiteboard-indicator-glow);
+    0 0 10px color-mix(in srgb, var(--theme-toolbar-background-color-active) 55%, transparent);
 }
 
 .layer-item-drop-target::after {
@@ -71,6 +68,6 @@ h4 {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--whiteboard-indicator);
+  background: var(--theme-toolbar-background-color-active);
   box-shadow: 0 0 0 2px var(--whiteboard-indicator-ring);
 }

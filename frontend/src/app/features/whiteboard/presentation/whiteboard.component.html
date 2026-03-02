@@ -79,11 +79,12 @@
 
     <div class="layers-panel-container">
       <ng-container *ngIf="leftPanelTab === 'widgets'; else layersTabContent">
-        <div class="layers-section widgets-rail-list">
+        <div class="widgets-rail-list">
           <div class="widget-group" *ngFor="let group of widgetGroups">
             <button
               type="button"
               class="widgets-rail-item widget-group-header overlay-item"
+              [class.active]="isWidgetGroupExpanded(group.id)"
               (click)="toggleWidgetGroup(group.id)"
               [attr.aria-expanded]="isWidgetGroupExpanded(group.id)"
             >
@@ -115,7 +116,7 @@
       </ng-container>
 
       <ng-template #layersTabContent>
-        <div class="left-tab-content left-tab-content-layers">
+        <div class="left-tab-content">
           <app-layer-list
             [widgets]="viewModel.board.widgets"
             [selectedWidgetId]="viewModel.selectedWidget?.id ?? null"

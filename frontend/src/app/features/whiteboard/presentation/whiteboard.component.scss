@@ -8,31 +8,17 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   height: 100%;
   min-height: 0;
   font-family: sans-serif;
-  --theme-toolbar-color: #ffffff;
-  --theme-toolbar-background-color: rgba(18, 20, 26, 0.85);
-  --theme-toolbar-background-color-active: #2566e2;
-  --theme-toolbar-button-color-hover: #ffffff;
-  --theme-toolbar-border-color: rgba(60, 67, 82, 0.85);
-  --theme-background-secondary-color: rgba(60, 67, 82, 0.85);
-  --theme-toolbar-color-disabled: #999999;
-  --theme-section-header-background: rgba(
-    61.5549295775,
-    68.7363380282,
-    84.1250704225,
-    0.85
-  );
-  --theme-section-header-background-hover: rgba(
-    75.5492957746,
-    84.3633802817,
-    103.2507042254,
-    0.85
-  );
-  --theme-section-header-border: rgba(
-    75.5492957746,
-    84.3633802817,
-    103.2507042254,
-    0.85
-  );
+  --theme-toolbar-color: #{$component-color-dark};
+  --theme-toolbar-background-color: #{$component-background-color-dark};
+  --theme-toolbar-background-color-light: #{$component-background-color-2-dark};
+  --theme-toolbar-background-color-active: #{$component-active-color};
+  --theme-toolbar-button-color-hover: #{$component-color-dark};
+  --theme-toolbar-border-color: #{$component-background-color-2-dark};
+  --theme-background-secondary-color: #{$component-background-color-2-dark};
+  --theme-toolbar-color-disabled: #64666d;
+  --theme-section-header-background: #{$component-background-color-2-dark};
+  --theme-section-header-background-hover: #{$component-background-color-3-dark};
+  --theme-section-header-border: #{$component-background-color-3-dark};
   --whiteboard-bg: #f4f6fb;
   --whiteboard-surface: #ffffff;
   --whiteboard-surface-soft: #f8faff;
@@ -60,6 +46,24 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   --whiteboard-indicator: #2f6bff;
   --whiteboard-indicator-glow: rgba(47, 107, 255, 0.55);
   --whiteboard-indicator-ring: rgba(255, 255, 255, 0.95);
+  --whiteboard-error-background: color-mix(
+    in srgb,
+    var(--whiteboard-danger) 10%,
+    transparent
+  );
+  --whiteboard-error-border: color-mix(
+    in srgb,
+    var(--whiteboard-danger) 35%,
+    transparent
+  );
+  --whiteboard-grid-line: rgba(89, 110, 154, 0.08);
+  --whiteboard-zoom-indicator-bg: rgba(15, 23, 42, 0.82);
+  --whiteboard-zoom-indicator-text: #ffffff;
+  --whiteboard-yellow-box-bg: #fef08a;
+  --whiteboard-drag-handle-border: rgba(15, 23, 42, 0.2);
+  --whiteboard-resize-handle-border: rgba(89, 110, 154, 0.4);
+  --whiteboard-resize-handle-ring: rgba(255, 255, 255, 0.9);
+  --whiteboard-bg-radial-highlight: rgba(75, 124, 255, 0.12);
 }
 
 :host,
@@ -75,7 +79,7 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
   color: var(--whiteboard-text-inverse);
   background: radial-gradient(
       circle at 10% -10%,
-      rgba(75, 124, 255, 0.12),
+      var(--whiteboard-bg-radial-highlight),
       transparent 28%
     ),
     var(--whiteboard-bg);
@@ -101,10 +105,10 @@ app-widget-canvas {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: var(--theme-toolbar-color, #ffffff);
-  background: var(--theme-toolbar-background-color, rgba(18, 20, 26, 0.85));
+  color: var(--theme-toolbar-color);
+  background: var(--theme-toolbar-background-color);
   border-radius: $toolbar-border-radius;
-  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  border: 1px solid var(--theme-toolbar-border-color);
   backdrop-filter: blur(2px);
   box-shadow: $toolbar-box-shadow;
   padding: 10px;
@@ -120,23 +124,13 @@ app-widget-canvas {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: var(--theme-toolbar-color, #ffffff);
-  background: var(--theme-toolbar-background-color, rgba(18, 20, 26, 0.85));
+  color: var(--theme-toolbar-color);
+  background: var(--theme-toolbar-background-color);
   border-radius: $toolbar-border-radius;
-  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  border: 1px solid var(--theme-toolbar-border-color);
   backdrop-filter: blur(2px);
   box-shadow: $toolbar-box-shadow;
   z-index: 20;
-}
-
-.widgets-rail.layers-panel {
-  overflow-y: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.widgets-rail.layers-panel::-webkit-scrollbar {
-  display: none;
 }
 
 .panel-header {
@@ -145,7 +139,7 @@ app-widget-canvas {
   justify-content: space-around;
   gap: 8px;
   padding: 8px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--theme-section-header-border);
   background-color: transparent;
 }
 
@@ -155,7 +149,7 @@ app-widget-canvas {
   border-radius: 6px;
   border: 1px solid var(--theme-section-header-border);
   background: var(--theme-section-header-background);
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -167,9 +161,9 @@ app-widget-canvas {
 }
 
 .left-panel-tab.active {
-  background: var(--theme-toolbar-background-color-active, #2566e2);
-  border-color: var(--theme-toolbar-background-color-active, #2566e2);
-  color: var(--theme-toolbar-button-color-hover, #ffffff);
+  background: var(--theme-toolbar-background-color-active);
+  border-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
 }
 
 .layers-panel-container {
@@ -195,27 +189,22 @@ app-widget-canvas {
   overflow-y: auto;
 }
 
-.left-tab-content-layers {
-  padding-right: 2px;
-}
-
 .widget-group {
   display: flex;
   flex-direction: column;
-  width: 100%;
 }
 
 .widget-group-title {
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   flex: 1;
   margin-left: 8px;
 }
 
 .widget-group-chevron {
   font-size: 0.75rem;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   margin-left: 8px;
 }
 
@@ -224,7 +213,7 @@ app-widget-canvas {
   height: 32px;
   opacity: 0.9;
   border-radius: 4px;
-  background-color: var(--primary-light, #3b82f6);
+  background-color: var(--whiteboard-indicator);
   flex-shrink: 0;
 }
 
@@ -255,21 +244,23 @@ app-widget-canvas {
   border-left: 2px solid transparent;
   box-sizing: border-box;
   margin-bottom: 2px;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   transition: all 0.2s ease;
 }
 
+.widgets-rail-item.overlay-item.active {
+  background-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
 .widgets-rail-item.overlay-item:hover:not(:disabled) {
-  background-color: var(
-    --theme-background-secondary-color,
-    rgba(60, 67, 82, 0.85)
-  );
+  background-color: var(--theme-background-secondary-color);
 }
 
 .widgets-rail-item.overlay-item:active:not(:disabled) {
-  background-color: var(--theme-toolbar-background-color-active, #2566e2);
-  border-left-color: var(--theme-toolbar-background-color-active, #2566e2);
-  color: var(--theme-toolbar-button-color-hover, #ffffff);
+  background-color: var(--theme-toolbar-background-color-active);
+  border-left-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
 }
 
 .widgets-rail-item.widget-group-header.overlay-item {
@@ -285,9 +276,14 @@ app-widget-canvas {
 }
 
 .widgets-rail-item.widget-group-header.overlay-item:active:not(:disabled) {
-  background-color: var(--theme-toolbar-background-color-active, #2566e2);
-  border-color: var(--theme-toolbar-background-color-active, #2566e2);
-  color: var(--theme-toolbar-button-color-hover, #ffffff);
+  background-color: var(--theme-toolbar-background-color-active);
+  border-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
+.folder-item,
+.overlay-item {
+  transition: all 0.2s ease;
 }
 
 .item-content-left {
@@ -313,7 +309,7 @@ app-widget-canvas {
 
 .item-icon {
   margin: 3px 0 0 3px;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   font-size: 16px;
   line-height: 1;
 }
@@ -325,7 +321,7 @@ app-widget-canvas {
   padding-top: 5px;
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
 }
 
 .zoom-toolbar-wrapper {
@@ -341,8 +337,8 @@ app-widget-canvas {
   flex-direction: column;
   gap: 12px;
   padding: 8px;
-  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
-  background: var(--theme-toolbar-background-color, rgba(18, 20, 26, 0.85));
+  border: 1px solid var(--theme-toolbar-border-color);
+  background: var(--theme-toolbar-background-color);
   border-radius: $toolbar-border-radius;
   box-shadow: $toolbar-box-shadow;
   backdrop-filter: blur(2px);
@@ -352,10 +348,10 @@ app-widget-canvas {
 .zoom-toolbar button {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--theme-toolbar-border-color, rgba(60, 67, 82, 0.85));
+  border: 1px solid var(--theme-toolbar-border-color);
   border-radius: $toolbar-border-radius;
   background: var(--theme-section-header-background);
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -371,7 +367,6 @@ app-widget-canvas {
 
 .zoom-toolbar .fullscreen-toggle {
   width: 36px;
-  min-width: 36px;
   font-size: 10px;
 }
 
@@ -402,8 +397,8 @@ app-widget-canvas {
 .error-banner {
   margin: 0;
   padding: 8px 12px;
-  background: rgba(199, 53, 74, 0.1);
-  border-bottom: 1px solid rgba(199, 53, 74, 0.35);
+  background: var(--whiteboard-error-background);
+  border-bottom: 1px solid var(--whiteboard-error-border);
   color: var(--whiteboard-danger);
   font-size: 13px;
 }

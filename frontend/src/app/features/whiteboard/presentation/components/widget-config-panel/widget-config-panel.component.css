@@ -3,7 +3,7 @@
   flex-direction: column;
   gap: 10px;
   min-height: 0;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   font-family: sans-serif;
 }
 
@@ -11,7 +11,7 @@ h4 {
   margin: 0;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--theme-section-header-border);
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -20,12 +20,12 @@ h4 {
 .selected-title {
   font-weight: 700;
   margin: 0;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
 }
 
 .layer-label {
   margin: 0;
-  color: var(--theme-toolbar-color-disabled, #999999);
+  color: var(--theme-toolbar-color-disabled);
   font-size: 12px;
 }
 
@@ -39,7 +39,7 @@ button {
   border: 1px solid var(--theme-section-header-border);
   border-radius: 6px;
   background: var(--theme-section-header-background);
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   padding: 7px 9px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -55,7 +55,7 @@ button:hover {
   display: grid;
   gap: 6px;
   font-size: 12px;
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
 }
 
 .control-row input,
@@ -64,7 +64,7 @@ button:hover {
   border: 1px solid var(--theme-section-header-border);
   border-radius: 6px;
   background: var(--theme-toolbar-background-color);
-  color: var(--theme-toolbar-color, #ffffff);
+  color: var(--theme-toolbar-color);
   padding: 8px;
 }
 
@@ -72,8 +72,8 @@ button:hover {
 .control-row textarea:focus,
 .control-row select:focus {
   outline: none;
-  border-color: var(--theme-toolbar-background-color-active, #2566e2);
-  box-shadow: 0 0 0 2px rgba(37, 102, 226, 0.3);
+  border-color: var(--theme-toolbar-background-color-active);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-toolbar-background-color-active) 30%, transparent);
 }
 
 .control-row textarea {
