@@ -6,15 +6,20 @@
 
 .canvas {
   position: relative;
-  background:
-    linear-gradient(var(--whiteboard-surface), var(--whiteboard-surface)) padding-box,
-    linear-gradient(transparent 23px, rgba(89, 110, 154, 0.08) 24px),
-    linear-gradient(90deg, transparent 23px, rgba(89, 110, 154, 0.08) 24px);
+  background: linear-gradient(
+        var(--whiteboard-surface),
+        var(--whiteboard-surface)
+      )
+      padding-box,
+    linear-gradient(transparent 23px, var(--whiteboard-grid-line) 24px),
+    linear-gradient(90deg, transparent 23px, var(--whiteboard-grid-line) 24px);
   background-size: 100% 100%, 24px 24px, 24px 24px;
   overflow: auto;
   min-height: 0;
 }
-.canvas-scroll-space { pointer-events: none; }
+.canvas-scroll-space {
+  pointer-events: none;
+}
 .canvas-surface {
   position: absolute;
   left: 0;
@@ -27,8 +32,8 @@
   z-index: 20;
   padding: 4px 8px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.82);
-  color: #fff;
+  background: var(--whiteboard-zoom-indicator-bg);
+  color: var(--whiteboard-zoom-indicator-text);
   font-size: 12px;
   line-height: 1;
   pointer-events: none;
@@ -48,7 +53,7 @@
 }
 
 .widget-yellow-box {
-  background: #fef08a;
+  background: var(--whiteboard-yellow-box-bg);
 }
 
 .widget-selected {
@@ -74,7 +79,7 @@
   z-index: 1;
   opacity: 0;
   pointer-events: none;
-  border-top: 1px dashed rgba(15, 23, 42, 0.2);
+  border-top: 1px dashed var(--whiteboard-drag-handle-border);
 }
 
 .widget-textual .drag-surface {
@@ -110,6 +115,7 @@
 
 .inline-yellow-editor {
   background: transparent;
+  font-size: xx-large;
   overflow: hidden;
   scrollbar-width: none;
 }
@@ -150,10 +156,6 @@
   user-select: none;
 }
 
-button {
-  cursor: pointer;
-}
-
 .resize-handle {
   position: absolute;
   border: 0;
@@ -165,7 +167,7 @@ button {
 }
 
 .resize-handle::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;
@@ -173,9 +175,9 @@ button {
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  border: 1px solid rgba(89, 110, 154, 0.4);
+  border: 1px solid var(--whiteboard-resize-handle-border);
   background: var(--whiteboard-surface);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 1px var(--whiteboard-resize-handle-ring);
 }
 
 .widget-selected .resize-handle {
@@ -183,11 +185,63 @@ button {
   pointer-events: auto;
 }
 
-.resize-n { top: -10px; left: 50%; width: 20px; height: 20px; transform: translateX(-50%); cursor: ns-resize; }
-.resize-s { bottom: -10px; left: 50%; width: 20px; height: 20px; transform: translateX(-50%); cursor: ns-resize; }
-.resize-e { right: -10px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); cursor: ew-resize; }
-.resize-w { left: -10px; top: 50%; width: 20px; height: 20px; transform: translateY(-50%); cursor: ew-resize; }
-.resize-ne { top: -9px; right: -9px; width: 18px; height: 18px; cursor: nesw-resize; }
-.resize-nw { top: -9px; left: -9px; width: 18px; height: 18px; cursor: nwse-resize; }
-.resize-se { right: -9px; bottom: -9px; width: 18px; height: 18px; cursor: nwse-resize; }
-.resize-sw { left: -9px; bottom: -9px; width: 18px; height: 18px; cursor: nesw-resize; }
+.resize-n {
+  top: -10px;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+.resize-s {
+  bottom: -10px;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  cursor: ns-resize;
+}
+.resize-e {
+  right: -10px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+.resize-w {
+  left: -10px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+}
+.resize-ne {
+  top: -9px;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  cursor: nesw-resize;
+}
+.resize-nw {
+  top: -9px;
+  left: -9px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+}
+.resize-se {
+  right: -9px;
+  bottom: -9px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+}
+.resize-sw {
+  left: -9px;
+  bottom: -9px;
+  width: 18px;
+  height: 18px;
+  cursor: nesw-resize;
+}

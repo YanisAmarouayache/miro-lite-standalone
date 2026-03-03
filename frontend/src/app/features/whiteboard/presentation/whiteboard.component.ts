@@ -1,8 +1,9 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
 import { WidgetModel } from '../domain/board.model';
+import { WidgetDefinition } from '../domain/widget-definition.model';
 import {
   LayerListComponent,
 } from './components/layer-list/layer-list.component';
@@ -26,6 +27,8 @@ import { ContextMenuState } from "./models/widget-context-menu.model";
 export class WhiteboardComponent implements OnChanges, OnDestroy {
   @ViewChild('canvasRef') private canvasRef?: WidgetCanvasComponent;
   @Input({ required: true }) boardId!: string;
+  private readonly hostRef = inject(ElementRef<HTMLElement>);
+  private readonly document = inject(DOCUMENT);
   private readonly facade = inject(WhiteboardFacade);
   private readonly interaction = inject(WidgetInteractionService);
   private readonly zoomState = inject(WhiteboardZoomService);
@@ -48,7 +51,11 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     }))
   );
   readonly availableWidgets = this.facade.availableWidgets;
+  readonly widgetGroups = this.buildWidgetGroups(this.availableWidgets);
+  readonly expandedWidgetGroups = new Set<string>(this.widgetGroups.map((group) => group.id));
+  leftPanelTab: 'widgets' | 'layers' = 'widgets';
   readonly chartTypes = ['pie', 'doughnut', 'bar', 'line'];
+  fullscreen = false;
   get zoom(): number {
     return this.zoomState.zoom;
   }
@@ -98,6 +105,11 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
   }
 
+  onShellWheel(event: WheelEvent): void {
+    event.preventDefault();
+    this.zoomState.onCanvasWheel(event, this.canvasRef?.getCanvasElement());
+  }
+
   selectedLayerPosition(widgets: WidgetModel[], widgetId: string): number {
     const index = widgets.findIndex((widget) => widget.id === widgetId);
     return index + 1;
@@ -115,7 +127,11 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
-    this.contextMenuState.close();
+    if (this.fullscreen) {
+      this.exitFullscreen();
+      return;
+    }
+    this.ui.clearSelection();
   }
 
   @HostListener('document:click')
@@ -123,9 +139,75 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.contextMenuState.close();
   }
 
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.fullscreen = !!this.document.fullscreenElement;
+  }
+
+  toggleFullscreen(): void {
+    if (this.fullscreen) {
+      this.exitFullscreen();
+      return;
+    }
+    const target = this.hostRef.nativeElement;
+    if (target.requestFullscreen) {
+      target.requestFullscreen().catch(() => {
+        // no-op
+      });
+    }
+  }
+
+  private exitFullscreen(): void {
+    if (this.document.fullscreenElement && this.document.exitFullscreen) {
+      this.document.exitFullscreen().catch(() => {
+        // no-op
+      });
+    }
+  }
+
   ngOnDestroy(): void {
     this.zoomState.destroy();
     this.facade.destroy();
+  }
+
+  toggleWidgetGroup(groupId: string): void {
+    if (this.expandedWidgetGroups.has(groupId)) {
+      this.expandedWidgetGroups.delete(groupId);
+      return;
+    }
+    this.expandedWidgetGroups.add(groupId);
+  }
+
+  isWidgetGroupExpanded(groupId: string): boolean {
+    return this.expandedWidgetGroups.has(groupId);
+  }
+
+  selectLeftPanelTab(tab: 'widgets' | 'layers'): void {
+    this.leftPanelTab = tab;
+  }
+
+  private buildWidgetGroups(widgets: WidgetDefinition[]): Array<{ id: string; title: string; widgets: WidgetDefinition[] }> {
+    const groups: Record<string, WidgetDefinition[]> = {
+      data: [],
+      content: [],
+      media: [],
+    };
+
+    widgets.forEach((widget) => {
+      if (widget.type === 'chart' || widget.type === 'table' || widget.type === 'counter') {
+        groups['data'].push(widget);
+      } else if (widget.type === 'text' || widget.type === 'textarea') {
+        groups['content'].push(widget);
+      } else {
+        groups['media'].push(widget);
+      }
+    });
+
+    return [
+      { id: 'data', title: 'Data', widgets: groups['data'] },
+      { id: 'content', title: 'Content', widgets: groups['content'] },
+      { id: 'media', title: 'Media', widgets: groups['media'] },
+    ].filter((group) => group.widgets.length > 0);
   }
 
 }

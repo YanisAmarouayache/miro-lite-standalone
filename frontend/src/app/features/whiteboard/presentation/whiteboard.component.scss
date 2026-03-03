@@ -1,21 +1,66 @@
-$navigation-rail-width: var(--navigation-rail-width, 0px);
-$toolbar-container-padding: var(--toolbar-container-padding, 0px);
-$whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
+@use "../../../../styles/variables" as *;
 
 :host {
   display: block;
   height: 100%;
   min-height: 0;
+  font-family: sans-serif;
+  --theme-toolbar-color: #{$component-color-dark};
+  --theme-toolbar-background-color: #{$component-background-color-dark};
+  --theme-toolbar-background-color-light: #{$component-background-color-2-dark};
+  --theme-toolbar-background-color-active: #{$component-active-color};
+  --theme-toolbar-button-color-hover: #{$component-color-dark};
+  --theme-toolbar-border-color: #{$component-background-color-2-dark};
+  --theme-background-secondary-color: #{$component-background-color-2-dark};
+  --theme-toolbar-color-disabled: #64666d;
+  --theme-section-header-background: #{$component-background-color-2-dark};
+  --theme-section-header-background-hover: #{$component-background-color-3-dark};
+  --theme-section-header-border: #{$component-background-color-3-dark};
   --whiteboard-bg: #f4f6fb;
   --whiteboard-surface: #ffffff;
   --whiteboard-surface-soft: #f8faff;
   --whiteboard-border: #dbe4f0;
-  --whiteboard-border-strong: #c8d6ea;
   --whiteboard-text: #1f2a44;
+  --whiteboard-text-inverse: #e2e8f0;
   --whiteboard-muted: #60718f;
   --whiteboard-accent: #4b7cff;
   --whiteboard-accent-soft: rgba(75, 124, 255, 0.2);
   --whiteboard-danger: #c7354a;
+  --whiteboard-surface-1: #1e2530;
+  --whiteboard-surface-2: #252b38;
+  --whiteboard-surface-gradient: linear-gradient(
+    135deg,
+    #1e2530 0%,
+    #252b38 100%
+  );
+  --whiteboard-border-rail: rgba(66, 153, 225, 0.2);
+  --whiteboard-border-strong: rgba(66, 153, 225, 0.3);
+  --whiteboard-border-hover: rgba(66, 153, 225, 0.5);
+  --whiteboard-fill: rgba(66, 153, 225, 0.3);
+  --whiteboard-fill-hover: rgba(66, 153, 225, 0.45);
+  --whiteboard-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --whiteboard-shadow-hover: 0 4px 12px rgba(66, 153, 225, 0.2);
+  --whiteboard-indicator: #2f6bff;
+  --whiteboard-indicator-glow: rgba(47, 107, 255, 0.55);
+  --whiteboard-indicator-ring: rgba(255, 255, 255, 0.95);
+  --whiteboard-error-background: color-mix(
+    in srgb,
+    var(--whiteboard-danger) 10%,
+    transparent
+  );
+  --whiteboard-error-border: color-mix(
+    in srgb,
+    var(--whiteboard-danger) 35%,
+    transparent
+  );
+  --whiteboard-grid-line: rgba(89, 110, 154, 0.08);
+  --whiteboard-zoom-indicator-bg: rgba(15, 23, 42, 0.82);
+  --whiteboard-zoom-indicator-text: #ffffff;
+  --whiteboard-yellow-box-bg: #fef08a;
+  --whiteboard-drag-handle-border: rgba(15, 23, 42, 0.2);
+  --whiteboard-resize-handle-border: rgba(89, 110, 154, 0.4);
+  --whiteboard-resize-handle-ring: rgba(255, 255, 255, 0.9);
+  --whiteboard-bg-radial-highlight: rgba(75, 124, 255, 0.12);
 }
 
 :host,
@@ -26,57 +71,21 @@ $whiteboard-top-offset: var(--whiteboard-top-offset, 0px);
 .whiteboard-shell {
   height: 100%;
   display: grid;
-  grid-template-rows: 56px 1fr;
-  color: var(--whiteboard-text);
-  background:
-    radial-gradient(circle at 10% -10%, rgba(75, 124, 255, 0.12), transparent 28%),
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  color: var(--whiteboard-text-inverse);
+  background: radial-gradient(
+      circle at 10% -10%,
+      var(--whiteboard-bg-radial-highlight),
+      transparent 28%
+    ),
     var(--whiteboard-bg);
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.toolbar h3 {
-  margin-left: calc(45px + #{$navigation-rail-width} + #{$toolbar-container-padding});
-  color: #e2e8f0;
-  font-weight: 600;
-}
-
-.toolbar-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.toolbar-actions button {
-  border: 1px solid rgba(66, 153, 225, 0.3);
-  border-radius: 6px;
-  background: rgba(66, 153, 225, 0.3);
-  color: #e2e8f0;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.toolbar-actions button:hover {
-  border-color: rgba(66, 153, 225, 0.5);
-  background: rgba(66, 153, 225, 0.45);
-  box-shadow: 0 4px 12px rgba(66, 153, 225, 0.2);
-  transform: translateY(-1px);
 }
 
 .board-layout {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 app-widget-canvas {
@@ -85,20 +94,303 @@ app-widget-canvas {
 }
 
 .side-panel {
-  border-left: 1px solid rgba(66, 153, 225, 0.2);
-  background: linear-gradient(135deg, #1e2530 0%, #252b38 100%);
-  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  display: grid;
-  align-content: start;
-  gap: 10px;
+  position: fixed;
+  top: $toolbar-container-padding;
+  right: 12px;
+  width: 300px;
+  height: calc(100vh - 8px - #{$toolbar-container-padding});
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--theme-toolbar-color);
+  background: var(--theme-toolbar-background-color);
+  border-radius: $toolbar-border-radius;
+  border: 1px solid var(--theme-toolbar-border-color);
+  backdrop-filter: blur(2px);
+  box-shadow: $toolbar-box-shadow;
+  padding: 10px;
+  z-index: 20;
+}
+
+.widgets-rail {
+  position: fixed;
+  top: calc(52px + #{$toolbar-container-padding});
+  left: calc(#{$navigation-rail-width} + #{$toolbar-container-padding});
+  width: 300px;
+  height: calc(100vh - 60px - #{$toolbar-container-padding});
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--theme-toolbar-color);
+  background: var(--theme-toolbar-background-color);
+  border-radius: $toolbar-border-radius;
+  border: 1px solid var(--theme-toolbar-border-color);
+  backdrop-filter: blur(2px);
+  box-shadow: $toolbar-box-shadow;
+  z-index: 20;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--theme-section-header-border);
+  background-color: transparent;
+}
+
+.left-panel-tab {
+  flex: 1 1 auto;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-section-header-border);
+  background: var(--theme-section-header-background);
+  color: var(--theme-toolbar-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.left-panel-tab:hover {
+  background: var(--theme-section-header-background-hover);
+}
+
+.left-panel-tab.active {
+  background: var(--theme-toolbar-background-color-active);
+  border-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
+.layers-panel-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
+  padding: 10px;
+}
+
+.widgets-rail-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.left-tab-content {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.widget-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-group-title {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--theme-toolbar-color);
+  flex: 1;
+  margin-left: 8px;
+}
+
+.widget-group-chevron {
+  font-size: 0.75rem;
+  color: var(--theme-toolbar-color);
+  margin-left: 8px;
+}
+
+.accordion-header-bar {
+  width: 3px;
+  height: 32px;
+  opacity: 0.9;
+  border-radius: 4px;
+  background-color: var(--whiteboard-indicator);
+  flex-shrink: 0;
+}
+
+.widget-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.widgets-rail-item.overlay-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  align-self: stretch;
+  padding: 4px 8px;
+  padding-right: 15px;
+  padding-left: 1px;
+  text-align: left;
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.02);
+  border: 0;
+  border-left: 2px solid transparent;
+  box-sizing: border-box;
+  margin-bottom: 2px;
+  color: var(--theme-toolbar-color);
+  transition: all 0.2s ease;
+}
+
+.widgets-rail-item.overlay-item.active {
+  background-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
+.widgets-rail-item.overlay-item:hover:not(:disabled) {
+  background-color: var(--theme-background-secondary-color);
+}
+
+.widgets-rail-item.overlay-item:active:not(:disabled) {
+  background-color: var(--theme-toolbar-background-color-active);
+  border-left-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
+.widgets-rail-item.widget-group-header.overlay-item {
+  background-color: var(--theme-section-header-background);
+  border: 1px solid var(--theme-section-header-border);
+  border-radius: 4px;
+  height: 36px;
+}
+
+.widgets-rail-item.widget-group-header.overlay-item:hover:not(:disabled) {
+  background-color: var(--theme-section-header-background-hover);
+  border-color: var(--theme-section-header-border);
+}
+
+.widgets-rail-item.widget-group-header.overlay-item:active:not(:disabled) {
+  background-color: var(--theme-toolbar-background-color-active);
+  border-color: var(--theme-toolbar-background-color-active);
+  color: var(--theme-toolbar-button-color-hover);
+}
+
+.item-content-left {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  overflow: hidden;
+  margin-left: 4px;
+}
+
+.item-main-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  margin-right: 10px;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.item-icon {
+  margin: 3px 0 0 3px;
+  color: var(--theme-toolbar-color);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.item-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 5px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--theme-toolbar-color);
+}
+
+.zoom-toolbar-wrapper {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+}
+
+.zoom-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--theme-toolbar-border-color);
+  background: var(--theme-toolbar-background-color);
+  border-radius: $toolbar-border-radius;
+  box-shadow: $toolbar-box-shadow;
+  backdrop-filter: blur(2px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.zoom-toolbar button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--theme-toolbar-border-color);
+  border-radius: $toolbar-border-radius;
+  background: var(--theme-section-header-background);
+  color: var(--theme-toolbar-color);
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-toolbar button:hover {
+  border-color: var(--theme-section-header-border);
+  background: var(--theme-section-header-background-hover);
+}
+
+.zoom-toolbar .fullscreen-toggle {
+  width: 36px;
+  font-size: 10px;
+}
+
+.whiteboard-shell.has-right-panel .zoom-toolbar-wrapper {
+  right: calc(16px + 300px + 12px);
+}
+
+.whiteboard-shell.is-fullscreen .zoom-toolbar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+}
+
+.whiteboard-shell.is-fullscreen .zoom-toolbar-wrapper:hover .zoom-toolbar,
+.whiteboard-shell.is-fullscreen .zoom-toolbar:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.whiteboard-shell.is-fullscreen .side-panel,
+.whiteboard-shell.is-fullscreen .widgets-rail,
+.whiteboard-shell.is-fullscreen .error-banner,
+.whiteboard-shell.is-fullscreen app-widget-context-menu {
+  display: none;
 }
 
 .error-banner {
   margin: 0;
   padding: 8px 12px;
-  background: rgba(199, 53, 74, 0.1);
-  border-bottom: 1px solid rgba(199, 53, 74, 0.35);
+  background: var(--whiteboard-error-background);
+  border-bottom: 1px solid var(--whiteboard-error-border);
   color: var(--whiteboard-danger);
   font-size: 13px;
 }

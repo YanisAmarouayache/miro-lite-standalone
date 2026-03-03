@@ -1,27 +1,56 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
 
-	"miro-lite-standalone/backend/internal/board"
-	"miro-lite-standalone/backend/internal/graph"
+	"miro-lite-standalone/backend/internal/domain/services"
+	"miro-lite-standalone/backend/internal/server-side/pubsub"
+	serverrepo "miro-lite-standalone/backend/internal/server-side/repositories"
+	"miro-lite-standalone/backend/internal/user-side/endpoints"
+	gql "miro-lite-standalone/backend/internal/user-side/graphql"
 )
 
+func getEnvOrDefault(key, fallback string) string {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		return v
+	}
+	return fallback
+}
+
 func main() {
-	svc := board.NewService("data/boards.json")
+	storePath := getEnvOrDefault("STORE_PATH", "data/boards.json")
+	port := getEnvOrDefault("PORT", "8091")
+	isProd := os.Getenv("ENV") == "production"
+	allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
+	allowedHeaders := parseAllowedHeaders(os.Getenv("ALLOWED_HEADERS"))
+
+	// Infrastructure
+	repo := serverrepo.NewBoardJSONRepository(storePath)
+	bus := pubsub.NewBoardEventBus()
+
+	// Domain
+	boardSvc := services.NewBoardService(repo, bus)
+
+	// Transport
+	hub := gql.NewSubscriptionHub(bus)
+	resolver := gql.NewResolver(boardSvc, hub)
 
 	// GraphQL
-	resolver := &graph.Resolver{BoardService: svc}
-	gqlSrv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+	gqlSrv := handler.New(gql.NewExecutableSchema(gql.Config{Resolvers: resolver}))
 	gqlSrv.AddTransport(transport.Options{})
 	gqlSrv.AddTransport(transport.GET{})
 	gqlSrv.AddTransport(transport.POST{})
@@ -31,115 +60,44 @@ func main() {
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
-				if origin == "" {
-					return true
-				}
-				allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
-				return allowedOrigins[origin]
+				return origin == "" || allowedOrigins[origin] // réutilise la map déjà parsée
 			},
 		},
 	})
 
-	mux := http.NewServeMux()
+	if !isProd {
+		gqlSrv.Use(extension.Introspection{})
+	}
 
-	// REST (inchangé)
+	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
-	mux.HandleFunc("/api/boards/", svc.HandleBoard)
-
-	// GraphQL
+	mux.HandleFunc("/api/boards/", endpoints.NewBoardHandler(boardSvc).Handle)
 	mux.Handle("/graphql", gqlSrv)
-	mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
-
-	handler := withCORS(mux)
-	log.Println("backend listening on :8091")
-	log.Println("GraphiQL playground → http://localhost:8091/playground")
-	if err := http.ListenAndServe(":8091", handler); err != nil {
-		log.Fatal(err)
+	if !isProd {
+		mux.Handle("/playground", playground.Handler("GraphQL Playground", "/graphql"))
 	}
-}
 
-func withCORS(next http.Handler) http.Handler {
-	allowedOrigins := parseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"))
-	allowedHeaders := parseAllowedHeaders(os.Getenv("ALLOWED_HEADERS"))
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: withCORS(mux, allowedOrigins, allowedHeaders),
+	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		isAllowedOrigin := origin == "" || allowedOrigins[origin] // ← origin vide = same-server = OK
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-		if isAllowedOrigin && origin != "" {
-			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
+	go func() {
+		log.Printf("backend listening on :%s", port)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatal(err)
 		}
-		w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
-		w.Header().Set("Access-Control-Allow-Methods", "GET,PUT,POST,OPTIONS")
+	}()
 
-		if r.Method == http.MethodOptions {
-			if !isAllowedOrigin {
-				rejectCORS(w, r)
-				return
-			}
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		if !isAllowedOrigin {
-			rejectCORS(w, r)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-// Rejette proprement en JSON si la route est /graphql, sinon texte brut
-func rejectCORS(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/graphql") {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
-		_, _ = w.Write([]byte(`{"errors":[{"message":"origin not allowed"}]}`))
-		return
-	}
-	http.Error(w, "origin not allowed", http.StatusForbidden)
-}
-
-func parseAllowedOrigins(raw string) map[string]bool {
-	if strings.TrimSpace(raw) == "" {
-		// ← :8091 ajouté pour que le Playground fonctionne sans config
-		raw = "http://localhost:4200,http://localhost:4201,http://localhost:8091"
-	}
-	origins := make(map[string]bool)
-	for _, value := range strings.Split(raw, ",") {
-		origin := strings.TrimSpace(value)
-		if origin == "" {
-			continue
-		}
-		origins[origin] = true
-	}
-	return origins
-}
-
-func parseAllowedHeaders(raw string) string {
-	if strings.TrimSpace(raw) == "" {
-		return "Content-Type,Authorization,Apollo-Require-Preflight,X-Requested-With,Accept,Origin"
-	}
-
-	headers := make([]string, 0)
-	seen := make(map[string]bool)
-	for _, value := range strings.Split(raw, ",") {
-		header := strings.TrimSpace(value)
-		if header == "" {
-			continue
-		}
-		key := strings.ToLower(header)
-		if seen[key] {
-			continue
-		}
-		seen[key] = true
-		headers = append(headers, header)
-	}
-	if len(headers) == 0 {
-		return "Content-Type,Authorization,Apollo-Require-Preflight,X-Requested-With,Accept,Origin"
-	}
-	return strings.Join(headers, ",")
+	<-ctx.Done()
+	log.Println("shutting down gracefully...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = srv.Shutdown(shutdownCtx)
 }

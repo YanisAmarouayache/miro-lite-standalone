@@ -1,14 +1,15 @@
 schema:
-  - "internal/graph/schema.graphqls"
+  - "internal/user-side/graphql/schema.graphqls"
 
 exec:
-  filename: internal/graph/generated.go
+  filename: internal/user-side/graphql/generated.go
+  package: graphql
 
 model:
-  filename: internal/graph/model/models_gen.go
+  filename: internal/user-side/graphql/model/models_gen.go
+  package: model
 
 resolver:
-  layout: single-file
-  dir: internal/graph
-  package: graph
-  filename: resolvers.go
+  layout: follow-schema
+  dir: internal/user-side/graphql
+  package: graphql

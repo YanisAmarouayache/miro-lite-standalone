@@ -1,0 +1,213 @@
+// src/styles/_variables.scss
+@use "sass:color";
+
+// Gap between components ans between components and borders
+$global-gap: 8px;
+
+// Button sizes
+$global-button-size-sm: 24px;
+$global-button-size-md: 36px;
+$global-button-size-lg: 48px;
+$global-button-size-xl: 64px;
+
+// Icon sizes
+$global-icon-size-xs: 12px;
+$global-icon-size-sm: 16px;
+$global-icon-size-md: 20px;
+
+// Bar sizes (width or height)
+$global-bar-size-sm: 36px;
+$global-bar-size-md: 48px;
+$global-bar-size-lg: 56px;
+
+// Components variables (toolbar, panel, etc.)
+$component-active-color: #2566e2;
+$component-hover-color: $component-active-color;
+$component-color-dark: #ffffff;
+$component-color-light: #000000;
+$component-color-grey: #f0f0f0;
+$green-color: green;
+$light-green-color: lightgreen;
+$orange-color: orange;
+$red-color: red;
+
+$pill-red-background-color: rgba(255, 82, 82, 0.15);
+$pill-red-text-color: rgba(255, 82, 82, 1);
+$pill-orange-background-color: rgba(255, 171, 0, 0.15);
+$pill-orange-text-color: rgba(255, 171, 0, 1);
+$pill-green-background-color: rgba(0, 200, 83, 0.15);
+$pill-green-text-color: rgba(0, 200, 83, 1);
+
+// Affiliation colors (military APP-6 standard)
+$affiliation-friendly-color-line: #00ffff; // Cyan
+$affiliation-friendly-color-fill: #80e0ff; // Crystal blue
+$affiliation-unknown-color-line: #ffff00; // Yellow
+$affiliation-unknown-color-fill: #ffff80; // Light yellow
+$affiliation-neutral-color-line: #00ff00; // Green
+$affiliation-neutral-color-fill: #aaffaa; // Bamboo green
+$affiliation-hostile-color-line: #ff0000; // Red
+$affiliation-hostile-color-fill: #ff8080; // Salmon
+$affiliation-graphics-black-color-line: #000000; // Black
+$affiliation-graphics-black-color-fill: #000000; // Black
+$affiliation-graphics-white-color-line: #ffffff; // White
+$affiliation-graphics-white-color-fill: #efefef; // 6% grey
+
+$component-opacity: 0.85;
+$component-border-radius: 6px;
+$component-z-index: 1010;
+$component-backdrop-filter: blur(2px);
+$component-background-color-dark: rgba(#12141a, $component-opacity);
+$component-background-color-2-dark: color.scale(
+  rgba(#3c4352, $component-opacity),
+  $lightness: 1%
+);
+$component-background-color-3-dark: color.scale(
+  rgba(#3c4352, $component-opacity),
+  $lightness: 10%
+);
+$component-background-color-light: rgba(#ffffff, $component-opacity);
+$component-background-color-2-light: rgba(#d2d9e7, $component-opacity);
+$component-background-color-3-light: color.scale(
+  rgba(#d2d9e7, $component-opacity),
+  $lightness: -10%
+);
+$dialog-background-color-dark: rgba(#12141a, 0.95);
+$dialog-background-color-light: rgba(#ffffff, 0.95);
+
+$navigation-rail-width: var(--navigation-rail-width, 56px);
+
+// Breakpoints
+$layout-breakpoint-small: 768px;
+
+// Transitions
+$transition-GUI-speed: 0.3s; // Vitesse standard pour les transitions d'UI
+
+// Couleurs
+$text-color: white;
+$button-background-color: rgb(40, 40, 40);
+$button-active-background-color: rgb(59, 59, 59);
+$highlighted-background: rgba(
+  80,
+  80,
+  80,
+  0.9
+); // Pour les survols de picto, etc.
+$blurred-background-color: rgba(
+  30,
+  30,
+  30,
+  0.8
+); // Couleur de fond pour la boîte floutée
+$separator-color: rgba(255, 255, 255, 0.2); // Couleur pour les séparateurs
+$zoom-display-background-color: rgba(
+  0,
+  0,
+  0,
+  0.2
+); // Fond pour l'affichage du zoom
+$dark-grey-color: #363b47;
+$dark-grey-hover-color: #3c424d;
+$light-grey-color: #d2d9e7;
+$light-grey-hover-color: #e0e6f0;
+$context-icon-color: #a8c2ee;
+
+// Dimensions & Typographie
+$base-font-size: 12px;
+$icon-container-size: 50px; // Taille (largeur/hauteur) des conteneurs d'icônes/boutons carrés
+$icon-size-percentage: 65%; // Pourcentage de la taille de l'icône dans son conteneur (header)
+$footer-icon-size-percentage: 60%; // Pourcentage de la taille de l'icône dans son conteneur (footer)
+$base-border-radius: 4px; // Rayon de bordure standard
+$search-border-radius: 20px; // Rayon de bordure pour les éléments de recherche
+$blurred-box-padding: 6px; // Padding pour la boîte floutée globale
+$blurred-box-border-radius: 8px; // Rayon de bordure pour la boîte floutée
+
+// Ombres
+$blurred-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+// Toolbar variables
+$toolbar-color: #ffffff;
+$toolbar-background-color: #12141a;
+$toolbar-background-color-active: #2566e2;
+
+$toolbar-background-color-hover: #0056b3;
+$toolbar-z-index: 1010;
+$panel-z-index-offset: 8; // Offset for panels to appear below main toolbars but above footers
+$toolbar-opacity: 0.9;
+$menu-opacity: 0.9;
+$toolbar-border-radius: 6px;
+$toolbar-container-padding: 8px;
+$toolbar-36-size: 36px;
+$toolbar-button-gap: 12px;
+$toolbar-button-padding: 8px;
+$toolbar-box-shadow: none;
+$panel-border-color: #444;
+$panel-button-border-color: #c4c8d1;
+$form-field-border-color: #444;
+$form-field-label-color: #95a5a6;
+$unit-symbol-background: #272d39;
+$backdrop-bg-color: rgba(0, 0, 0, 0.5);
+$background-color-disabled: #5a5a5a;
+
+$invalid-form-color: #fa6400;
+
+$destroyed-color: #ed3f41;
+$damaged-color: #fa6400;
+$fully-operational-color: #65dd19;
+
+$dark-theme: (
+  toolbar-color: $component-color-dark,
+  toolbar-color-dark: color.scale(#ffffff, $lightness: -10%),
+  toolbar-background-color: $component-background-color-dark,
+  toolbar-background-color-light: $component-background-color-2-dark,
+  toolbar-background-color-active: $component-active-color,
+  toolbar-background-color-hover: $component-hover-color,
+  toolbar-button-color-hover: $component-color-dark,
+  toolbar-border-color: $component-background-color-2-dark,
+  select-option-background-color: $component-background-color-2-dark,
+  default-background-color: $component-background-color-2-dark,
+  background-secondary-color: $component-background-color-2-dark,
+  section-header-background: $component-background-color-2-dark,
+  section-header-background-hover: $component-background-color-3-dark,
+  section-header-border: $component-background-color-3-dark,
+  text-color-primary: $component-color-dark,
+  text-color-secondary: #bdc3c7,
+  text-color-disabled: #64666d,
+  calendar-label-color: #64666d,
+  orbat-label-color: $component-color-dark,
+  orbat-label-outline-color: #000000,
+  role-badge-color: #e8f0fe,
+  role-badge-background-color: $component-active-color,
+  dialog-background-color: $dialog-background-color-dark,
+  input-border-color: $light-grey-color,
+  input-hover-color: $dark-grey-hover-color,
+  drag-over-background-color: rgba(33, 150, 243, 0.1),
+);
+
+$light-theme: (
+  toolbar-color: $component-color-light,
+  toolbar-color-dark: color.scale(#ffffff, $lightness: 10%),
+  toolbar-background-color: $component-background-color-light,
+  toolbar-background-color-light: $component-background-color-2-light,
+  toolbar-background-color-active: $component-active-color,
+  toolbar-background-color-hover: $component-hover-color,
+  toolbar-button-color-hover: $component-color-dark,
+  toolbar-border-color: $component-background-color-2-light,
+  select-option-background-color: $component-background-color-2-light,
+  default-background-color: $component-background-color-2-light,
+  background-secondary-color: $component-background-color-2-light,
+  section-header-background: $component-background-color-2-light,
+  section-header-background-hover: $component-background-color-3-light,
+  section-header-border: $component-background-color-3-light,
+  text-color-primary: $component-color-light,
+  text-color-secondary: #64666d,
+  text-color-disabled: #95a5a6,
+  calendar-label-color: #64666d,
+  orbat-label-color: $component-color-light,
+  orbat-label-outline-color: #ffffff,
+  role-badge-color: #2566e2,
+  role-badge-background-color: #e8f0fe,
+  dialog-background-color: $dialog-background-color-light,
+  input-border-color: $dark-grey-color,
+  input-hover-color: $light-grey-hover-color,
+  drag-over-background-color: rgba(33, 150, 243, 0.1),
+);
