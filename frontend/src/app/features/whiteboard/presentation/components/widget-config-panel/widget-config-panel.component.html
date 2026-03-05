@@ -1,39 +1,89 @@
 <h4>Configuration</h4>
-<ng-container *ngIf="selectedWidget as selected; else noSelection">
-  <p class="selected-title">{{ widgetName(selected.type) }}</p>
-  <p class="layer-label">Layer {{ layerPosition }} / {{ widgetCount }}</p>
+<ng-container *ngIf="vm as panel; else noSelection">
+  <p class="selected-title">{{ panel.widgetName }}</p>
+  <p class="layer-label">Layer {{ panel.layerPosition }} / {{ panel.widgetCount }}</p>
   <div class="layer-actions">
-    <button type="button" [disabled]="!editable" (click)="action.emit('send_to_back')">Tout derrière</button>
-    <button type="button" [disabled]="!editable" (click)="action.emit('send_backward')">Arrière</button>
-    <button type="button" [disabled]="!editable" (click)="action.emit('bring_forward')">Avant</button>
-    <button type="button" [disabled]="!editable" (click)="action.emit('bring_to_front')">Tout devant</button>
+    <button type="button" [disabled]="!panel.editable" (click)="command.emit({ type: 'action', action: 'send_to_back' })">Tout derrière</button>
+    <button type="button" [disabled]="!panel.editable" (click)="command.emit({ type: 'action', action: 'send_backward' })">Arrière</button>
+    <button type="button" [disabled]="!panel.editable" (click)="command.emit({ type: 'action', action: 'bring_forward' })">Avant</button>
+    <button type="button" [disabled]="!panel.editable" (click)="command.emit({ type: 'action', action: 'bring_to_front' })">Tout devant</button>
   </div>
-  <button type="button" [disabled]="!editable" (click)="action.emit('remove')">Supprimer</button>
+  <button type="button" [disabled]="!panel.editable" (click)="command.emit({ type: 'action', action: 'remove' })">Supprimer</button>
 
-  <label *ngIf="selected.type === 'text' || selected.type === 'textarea'" class="control-row">
+  <label *ngIf="panel.widgetType === 'text' || panel.widgetType === 'textarea'" class="control-row">
     Texte
-    <textarea [readonly]="!editable" [ngModel]="textValue(selected)" (ngModelChange)="updateText.emit($event)"></textarea>
+    <textarea
+      [readonly]="!panel.editable"
+      [ngModel]="textDraft"
+      (ngModelChange)="onTextDraftChange($event)"
+      (blur)="onTextBlur()"
+    ></textarea>
   </label>
 
-  <label *ngIf="selected.type === 'chart'" class="control-row">
+  <label *ngIf="panel.widgetType === 'chart'" class="control-row">
     Type
-    <select [disabled]="!editable" [ngModel]="chartType(selected)" (ngModelChange)="updateChartType.emit($event)">
-      <option *ngFor="let type of chartTypes" [value]="type">{{ type }}</option>
+    <select [disabled]="!panel.editable" [ngModel]="panel.chartType" (ngModelChange)="command.emit({ type: 'update_chart_type', chartType: $event })">
+      <option *ngFor="let type of panel.chartTypes" [value]="type">{{ type }}</option>
     </select>
   </label>
 
-  <label *ngIf="selected.type === 'counter'" class="control-row">
-    Label
-    <input type="text" [readonly]="!editable" [ngModel]="counterLabel(selected)" (ngModelChange)="updateCounterLabel.emit($event)" />
-  </label>
-  <label *ngIf="selected.type === 'counter'" class="control-row">
-    Value
-    <input type="number" [readonly]="!editable" [ngModel]="counterValue(selected)" (ngModelChange)="updateCounterValue.emit($event)" />
+  <label *ngIf="panel.widgetType === 'chart'" class="control-row">
+    Data source
+    <select [disabled]="!panel.editable" [ngModel]="panel.chartDataSourceCode" (ngModelChange)="command.emit({ type: 'update_chart_data_source', dataSourceCode: $event })">
+      <option value="">None</option>
+      <option *ngFor="let dataSource of panel.dataSourceDefinitions" [value]="dataSource.code">{{ dataSource.code }}</option>
+    </select>
   </label>
 
-  <label *ngIf="selected.type === 'image'" class="control-row">
+  <label *ngIf="panel.widgetType === 'chart'" class="control-row">
+    Overlay
+    <select
+      [disabled]="!panel.editable || !panel.chartDataSourceCode"
+      [ngModel]="panel.chartOverlayHuid"
+      (ngModelChange)="command.emit({ type: 'update_chart_overlay_huid', overlayHuid: $event })"
+    >
+      <option value="">Select overlay</option>
+      <option *ngFor="let overlay of panel.accessibleOverlays" [value]="overlay.huid">
+        {{ overlay.name }}
+      </option>
+    </select>
+  </label>
+
+  <label *ngIf="panel.widgetType === 'chart'" class="control-row">
+    Unit
+    <select
+      [disabled]="!panel.editable || !panel.chartDataSourceCode || !panel.chartOverlayHuid"
+      [ngModel]="panel.chartUnitHuid"
+      (ngModelChange)="command.emit({ type: 'update_chart_unit_huid', unitHuid: $event })"
+    >
+      <option value="">Select unit</option>
+      <option *ngFor="let unit of panel.overlayUnits" [value]="unit.huid">
+        {{ unit.name }}
+      </option>
+    </select>
+  </label>
+
+  <button
+    *ngIf="panel.widgetType === 'chart'"
+    type="button"
+    [disabled]="!panel.editable"
+    (click)="command.emit({ type: 'fetch_snapshot' })"
+  >
+    Fetch snapshot
+  </button>
+
+  <label *ngIf="panel.widgetType === 'counter'" class="control-row">
+    Label
+    <input type="text" [readonly]="!panel.editable" [ngModel]="panel.counterLabel" (ngModelChange)="command.emit({ type: 'update_counter_label', label: $event })" />
+  </label>
+  <label *ngIf="panel.widgetType === 'counter'" class="control-row">
+    Value
+    <input type="number" [readonly]="!panel.editable" [ngModel]="panel.counterValue" (ngModelChange)="command.emit({ type: 'update_counter_value', value: $event })" />
+  </label>
+
+  <label *ngIf="panel.widgetType === 'image'" class="control-row">
     Import image
-    <input type="file" [disabled]="!editable" accept="image/*" (change)="onImageFileChange($event)" />
+    <input type="file" [disabled]="!panel.editable" accept="image/*" (change)="onImageFileChange($event)" />
   </label>
 </ng-container>
 <ng-template #noSelection>

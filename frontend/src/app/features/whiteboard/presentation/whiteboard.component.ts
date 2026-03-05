@@ -2,13 +2,28 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { combineLatest, map } from 'rxjs';
 import { WhiteboardFacade } from '../application/whiteboard.facade';
+import { BoardSessionService } from '../application/services/board-session.service';
 import { WidgetModel } from '../domain/board.model';
+import { DataSourceDefinitionModel } from '../domain/datasource-definition.model';
 import { WidgetDefinition } from '../domain/widget-definition.model';
+import {
+  getChartDataSourceCode,
+  getChartOverlayHuid,
+  getChartType,
+  getChartUnitHuid,
+  getCounterLabel,
+  getCounterValue,
+  getWidgetText,
+} from '../domain/widget-selectors';
 import {
   LayerListComponent,
 } from './components/layer-list/layer-list.component';
 import { WidgetContextMenuComponent } from './components/widget-context-menu/widget-context-menu.component';
-import { WidgetConfigPanelComponent } from './components/widget-config-panel/widget-config-panel.component';
+import {
+  WidgetConfigCommand,
+  WidgetConfigPanelComponent,
+  WidgetConfigPanelVm,
+} from './components/widget-config-panel/widget-config-panel.component';
 import { WidgetCanvasComponent } from './components/widget-canvas/widget-canvas.component';
 import { WidgetInteractionService } from './services/widget-interaction.service';
 import { WhiteboardZoomService } from './services/whiteboard-zoom.service';
@@ -19,7 +34,7 @@ import { ContextMenuState } from "./models/widget-context-menu.model";
 @Component({
     selector: 'whiteboard',
     imports: [CommonModule, LayerListComponent, WidgetConfigPanelComponent, WidgetContextMenuComponent, WidgetCanvasComponent],
-    providers: [WhiteboardFacade, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService, WhiteboardUiService],
+    providers: [WhiteboardFacade, BoardSessionService, WidgetInteractionService, WhiteboardZoomService, WidgetContextMenuService, WhiteboardUiService],
     templateUrl: './whiteboard.component.html',
     styleUrl: './whiteboard.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -34,20 +49,47 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
   private readonly zoomState = inject(WhiteboardZoomService);
   private readonly contextMenuState = inject(WidgetContextMenuService);
   readonly ui = inject(WhiteboardUiService);
+  private readonly widgetNameByType = new Map<string, string>();
   readonly loadError$ = this.facade.loadError$;
   readonly saveError$ = this.facade.saveError$;
   readonly viewModel$ = combineLatest([
     this.facade.board$,
     this.facade.boardReady$,
     this.interaction.selectedWidgetId$,
+    this.facade.chartSnapshots$,
+    this.facade.dataSourceDefinitions$,
+    this.facade.accessibleOverlays$,
+    this.facade.overlayUnitsByOverlayHuid$,
   ]).pipe(
-    map(([board, editable, selectedWidgetId]) => ({
+    map(([
       board,
       editable,
+      selectedWidgetId,
+      chartSnapshots,
+      dataSourceDefinitions,
+      accessibleOverlays,
+      overlayUnitsByOverlayHuid,
+    ]) => ({
+      board,
+      editable,
+      chartSnapshots,
+      dataSourceDefinitions,
+      accessibleOverlays,
+      overlayUnitsByOverlayHuid,
       selectedWidget:
         selectedWidgetId
           ? board.widgets.find((widget) => widget.id === selectedWidgetId)
           : undefined,
+      panel: selectedWidgetId
+        ? this.buildPanelVm(
+            board.widgets,
+            selectedWidgetId,
+            editable,
+            dataSourceDefinitions,
+            accessibleOverlays,
+            overlayUnitsByOverlayHuid
+          )
+        : null,
     }))
   );
   readonly availableWidgets = this.facade.availableWidgets;
@@ -186,6 +228,55 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     this.leftPanelTab = tab;
   }
 
+  onPanelCommand(command: WidgetConfigCommand, panel: WidgetConfigPanelVm): void {
+    switch (command.type) {
+      case 'action':
+        this.ui.onContextMenuAction(
+          { widgetId: panel.widgetId, action: command.action },
+          panel.editable
+        );
+        return;
+      case 'update_text':
+        this.ui.onWidgetTextChange(
+          { widgetId: panel.widgetId, text: command.text },
+          panel.editable
+        );
+        return;
+      case 'update_chart_type':
+        this.ui.updateChartType(panel.widgetId, command.chartType, panel.editable);
+        return;
+      case 'update_chart_data_source':
+        this.ui.updateChartDataSource(
+          panel.widgetId,
+          command.dataSourceCode,
+          panel.editable
+        );
+        return;
+      case 'update_chart_overlay_huid':
+        this.ui.updateChartOverlayHuid(
+          panel.widgetId,
+          command.overlayHuid,
+          panel.editable
+        );
+        return;
+      case 'update_chart_unit_huid':
+        this.ui.updateChartUnitHuid(panel.widgetId, command.unitHuid, panel.editable);
+        return;
+      case 'fetch_snapshot':
+        this.ui.fetchWidgetSnapshot(panel.widgetId, panel.editable);
+        return;
+      case 'update_counter_label':
+        this.ui.updateCounterLabel(panel.widgetId, command.label, panel.editable);
+        return;
+      case 'update_counter_value':
+        this.ui.updateCounterValue(panel.widgetId, command.value, panel.editable);
+        return;
+      case 'image_selected':
+        this.ui.updateImageFromFile(panel.widgetId, command.file, panel.editable);
+        return;
+    }
+  }
+
   private buildWidgetGroups(widgets: WidgetDefinition[]): Array<{ id: string; title: string; widgets: WidgetDefinition[] }> {
     const groups: Record<string, WidgetDefinition[]> = {
       data: [],
@@ -208,6 +299,52 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
       { id: 'content', title: 'Content', widgets: groups['content'] },
       { id: 'media', title: 'Media', widgets: groups['media'] },
     ].filter((group) => group.widgets.length > 0);
+  }
+
+  private buildPanelVm(
+    widgets: WidgetModel[],
+    selectedWidgetId: string,
+    editable: boolean,
+    dataSourceDefinitions: DataSourceDefinitionModel[],
+    accessibleOverlays: { huid: string; name: string }[],
+    overlayUnitsByOverlayHuid: ReadonlyMap<string, { huid: string; name: string }[]>
+  ): WidgetConfigPanelVm | null {
+    const selectedWidget = widgets.find((widget) => widget.id === selectedWidgetId);
+    if (!selectedWidget) {
+      return null;
+    }
+    const chartOverlayHuid = getChartOverlayHuid(selectedWidget);
+    return {
+      widgetId: selectedWidget.id,
+      widgetType: selectedWidget.type,
+      widgetName: this.widgetName(selectedWidget.type),
+      layerPosition: this.selectedLayerPosition(widgets, selectedWidget.id),
+      widgetCount: widgets.length,
+      chartTypes: this.chartTypes,
+      dataSourceDefinitions,
+      accessibleOverlays,
+      overlayUnits: chartOverlayHuid
+        ? overlayUnitsByOverlayHuid.get(chartOverlayHuid) ?? []
+        : [],
+      editable,
+      textValue: getWidgetText(selectedWidget),
+      chartType: getChartType(selectedWidget),
+      chartDataSourceCode: getChartDataSourceCode(selectedWidget),
+      chartOverlayHuid,
+      chartUnitHuid: getChartUnitHuid(selectedWidget),
+      counterLabel: getCounterLabel(selectedWidget),
+      counterValue: getCounterValue(selectedWidget),
+    };
+  }
+
+  private widgetName(type: string): string {
+    const cached = this.widgetNameByType.get(type);
+    if (cached) {
+      return cached;
+    }
+    const match = this.availableWidgets.find((item) => item.type === type)?.name ?? type;
+    this.widgetNameByType.set(type, match);
+    return match;
   }
 
 }

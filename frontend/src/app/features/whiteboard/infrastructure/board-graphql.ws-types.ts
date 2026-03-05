@@ -4,6 +4,11 @@ type WsConnectionAckMessage = {
   type: "connection_ack";
 };
 
+type WsConnectionErrorMessage = {
+  type: "connection_error";
+  payload?: unknown;
+};
+
 type WsPingMessage = {
   type: "ping";
 };
@@ -15,6 +20,7 @@ type WsNextMessage = {
     data?: {
       boardUpdated?: {
         id?: string;
+        title?: string;
         version?: number;
         widgets?: GqlWidgetPayload[];
       };
@@ -34,6 +40,7 @@ type WsCompleteMessage = {
 
 export type WsMessage =
   | WsConnectionAckMessage
+  | WsConnectionErrorMessage
   | WsPingMessage
   | WsNextMessage
   | WsErrorMessage
@@ -48,6 +55,7 @@ export function parseWsMessage(raw: unknown): WsMessage | null {
     }
     switch (parsed.type) {
       case "connection_ack":
+      case "connection_error":
       case "ping":
       case "next":
       case "error":

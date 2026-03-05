@@ -1,16 +1,17 @@
 import { Injectable } from "@angular/core";
-import { EMPTY, Observable, catchError, mapTo, of, switchMap, tap } from "rxjs";
+import { EMPTY, Observable, catchError, mapTo, tap } from "rxjs";
 import { BoardModel } from "../../domain/board.model";
 import { BoardRepositoryPort } from "../../domain/ports/board-repository.port";
 
 @Injectable({ providedIn: "root" })
 export class BoardSyncService {
-  persistWithLastWriteWins(
+  persistWithOptimisticConcurrency(
     repo: BoardRepositoryPort,
     localBoard: BoardModel,
     getCurrentBoard: () => BoardModel,
     onLocalVersionSynced: (version: number) => void,
-    setSaveError: (message: string | null) => void
+    setSaveError: (message: string | null) => void,
+    onVersionConflict: () => void
   ): Observable<void> {
     return repo.save(localBoard).pipe(
       tap((serverVersion) =>
@@ -23,59 +24,17 @@ export class BoardSyncService {
         )
       ),
       mapTo(void 0),
-      catchError((e) =>
-        e?.status === 409
-          ? this.retrySaveWithLatestServerVersion(
-              repo,
-              localBoard.id,
-              getCurrentBoard,
-              onLocalVersionSynced,
-              setSaveError
-            )
-          : this.toSaveErrorAndComplete(e, setSaveError, "Save failed")
-      )
-    );
-  }
-
-  private retrySaveWithLatestServerVersion(
-    repo: BoardRepositoryPort,
-    boardId: string,
-    getCurrentBoard: () => BoardModel,
-    onLocalVersionSynced: (version: number) => void,
-    setSaveError: (message: string | null) => void
-  ): Observable<void> {
-    return repo.load(boardId).pipe(
-      switchMap((serverBoard) => {
-        const latestLocal = getCurrentBoard();
-        if (latestLocal.id !== boardId) {
-          return of(void 0);
+      catchError((e) => {
+        if (this.isStaleBoardRequest(getCurrentBoard, localBoard.id)) {
+          return EMPTY;
         }
-
-        return repo
-          .save({
-            ...latestLocal,
-            version: serverBoard.version,
-          })
-          .pipe(
-            tap((savedVersion) =>
-              this.applySavedVersionIfCurrentBoard(
-                getCurrentBoard,
-                boardId,
-                savedVersion,
-                onLocalVersionSynced,
-                setSaveError
-              )
-            ),
-            mapTo(void 0)
-          );
-      }),
-      catchError((retryError) =>
-        this.toSaveErrorAndComplete(
-          retryError,
-          setSaveError,
-          "Save failed after conflict retry"
-        )
-      )
+        if (this.isVersionConflictError(e)) {
+          setSaveError("Board version conflict. Reloading latest board...");
+          onVersionConflict();
+          return EMPTY;
+        }
+        return this.toSaveErrorAndComplete(e, setSaveError, "Save failed");
+      })
     );
   }
 
@@ -112,5 +71,22 @@ export class BoardSyncService {
       asAny?.networkError?.result?.errors?.[0]?.message ||
       fallback
     );
+  }
+
+  private isVersionConflictError(error: unknown): boolean {
+    const asAny = error as any;
+    if (asAny?.name === "VersionConflictError") return true;
+    const message = this.errorMessage(error, "");
+    if (message.toLowerCase().includes("version conflict")) return true;
+
+    return asAny?.status === 409 || asAny?.networkError?.statusCode === 409;
+  }
+
+  private isStaleBoardRequest(
+    getCurrentBoard: () => BoardModel,
+    expectedBoardId: string
+  ): boolean {
+    const current = getCurrentBoard();
+    return current.id !== expectedBoardId;
   }
 }

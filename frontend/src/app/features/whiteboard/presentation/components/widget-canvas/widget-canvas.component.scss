@@ -41,6 +41,7 @@
 
 .widget {
   position: absolute;
+  isolation: isolate;
   box-sizing: border-box;
   border: 1px solid transparent;
   background: var(--whiteboard-surface);
@@ -54,6 +55,11 @@
 
 .widget-yellow-box {
   background: var(--whiteboard-yellow-box-bg);
+}
+
+.widget-transparent {
+  background: transparent;
+  padding: 0;
 }
 
 .widget-selected {

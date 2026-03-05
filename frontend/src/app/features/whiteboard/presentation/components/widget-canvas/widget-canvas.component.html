@@ -30,6 +30,7 @@
   >
     <article
       class="widget"
+      [class.widget-transparent]="isDoughnut(w)"
       [class.widget-yellow-box]="w.type === 'text'"
       [class.widget-textual]="w.type === 'text' || w.type === 'textarea'"
       [class.widget-selected]="isSelected(w.id)"
@@ -62,7 +63,17 @@
           (ngModelChange)="updateText.emit({ widgetId: w.id, text: $event })"
         ></textarea>
         <div *ngSwitchCase="'chart'" class="chart-widget">
-          <p>Chart: {{ chartType(w) }}</p>
+          <ng-container *ngIf="isDoughnut(w); else genericChart">
+            <ng-container *ngIf="hasDoughnutData(w); else doughnutEmpty">
+              <app-capaops-doughnut [snapshot]="doughnutData(w)!" />
+            </ng-container>
+            <ng-template #doughnutEmpty>
+              <p>Doughnut ready. Click "Fetch snapshot".</p>
+            </ng-template>
+          </ng-container>
+          <ng-template #genericChart>
+            <p>Chart: {{ chartType(w) }}</p>
+          </ng-template>
         </div>
         <div *ngSwitchCase="'counter'" class="counter-widget">
           <p>{{ counterLabel(w) }}</p>

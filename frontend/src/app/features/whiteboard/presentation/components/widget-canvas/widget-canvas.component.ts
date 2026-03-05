@@ -10,7 +10,18 @@ import {
   ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { CapaOpsDoughnutSnapshot } from "../../../domain/capaops.model";
 import { WidgetModel } from "../../../domain/board.model";
+import {
+  getChartType,
+  getCounterLabel,
+  getCounterValue,
+  getImageAlt,
+  getImageSrc,
+  getWidgetText,
+  isChartWidget,
+} from "../../../domain/widget-selectors";
+import { CapaopsDoughnutComponent } from "../capaops-doughnut/capaops-doughnut.component";
 import {
   ResizeDirection,
   WidgetDropEvent,
@@ -24,7 +35,7 @@ import {
 @Component({
   selector: "app-widget-canvas",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CapaopsDoughnutComponent],
   templateUrl: "./widget-canvas.component.html",
   styleUrl: "./widget-canvas.component.scss",
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,6 +50,8 @@ export class WidgetCanvasComponent {
 
   @ViewChild("canvasRoot") private canvasRoot?: ElementRef<HTMLDivElement>;
   @Input({ required: true }) widgets: WidgetModel[] = [];
+  @Input() chartSnapshots: ReadonlyMap<string, CapaOpsDoughnutSnapshot> =
+    new Map();
   @Input({ required: true }) frameOverrides: ReadonlyMap<string, WidgetFrame> =
     new Map();
   @Input() selectedWidgetId: string | null = null;
@@ -87,45 +100,39 @@ export class WidgetCanvasComponent {
   }
 
   textValue(widget: WidgetModel): string {
-    if (widget.type === "text" || widget.type === "textarea") {
-      return widget.config.text;
-    }
-    return "";
+    return getWidgetText(widget);
   }
 
   chartType(widget: WidgetModel): string {
-    if (widget.type === "chart") {
-      return widget.config.chartType;
-    }
-    return "pie";
+    return getChartType(widget);
+  }
+
+  isDoughnut(widget: WidgetModel): boolean {
+    return isChartWidget(widget) && this.chartType(widget) === "doughnut";
+  }
+
+  hasDoughnutData(widget: WidgetModel): boolean {
+    return this.isDoughnut(widget) && this.chartSnapshots.has(widget.id);
+  }
+
+  doughnutData(widget: WidgetModel): CapaOpsDoughnutSnapshot | null {
+    return this.chartSnapshots.get(widget.id) ?? null;
   }
 
   imageSrc(widget: WidgetModel): string {
-    if (widget.type === "image") {
-      return widget.config.src;
-    }
-    return "";
+    return getImageSrc(widget);
   }
 
   imageAlt(widget: WidgetModel): string {
-    if (widget.type === "image") {
-      return widget.config.alt;
-    }
-    return "Imported image";
+    return getImageAlt(widget);
   }
 
   counterValue(widget: WidgetModel): number {
-    if (widget.type === "counter") {
-      return widget.config.value;
-    }
-    return 0;
+    return getCounterValue(widget);
   }
 
   counterLabel(widget: WidgetModel): string {
-    if (widget.type === "counter") {
-      return widget.config.label;
-    }
-    return "Metric";
+    return getCounterLabel(widget);
   }
 
   onWidgetContextMenu(widgetId: string, event: MouseEvent): void {

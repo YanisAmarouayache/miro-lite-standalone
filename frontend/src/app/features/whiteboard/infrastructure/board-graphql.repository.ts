@@ -2,19 +2,32 @@ import { Injectable, inject } from "@angular/core";
 import { Apollo } from "apollo-angular";
 import { Observable, map, catchError, throwError } from "rxjs";
 import { BoardModel } from "../domain/board.model";
-import { BoardRepositoryPort } from "../domain/ports/board-repository.port";
+import {
+  BoardRepositoryPort,
+  WidgetSnapshotResult,
+} from "../domain/ports/board-repository.port";
 import {
   GqlWidgetPayload,
+  parseCapaOpsDoughnutSnapshot,
   payloadToWidget,
-  widgetToInput,
+  widgetToInput
 } from "./board-graphql.mapper";
-import { GET_BOARD, SAVE_BOARD } from "./board-graphql.operations";
+import {
+  FETCH_WIDGET_SNAPSHOT,
+  GET_ACCESSIBLE_OVERLAYS,
+  GET_DATA_SOURCE_DEFINITIONS,
+  GET_BOARD,
+  GET_OVERLAY_UNITS,
+  SAVE_BOARD,
+} from "./board-graphql.operations";
 import { VersionConflictError } from "./board-graphql.errors";
 import {
   createBoardSubscriptionStream,
   toWebSocketUrl,
 } from "./board-graphql.subscription";
 import { WHITEBOARD_GRAPHQL_URL } from "../whiteboard.providers";
+import { DataSourceDefinitionModel } from "../domain/datasource-definition.model";
+import { OverlaySummary, UnitSummary } from "../domain/overlay-summary.model";
 
 @Injectable()
 export class BoardGraphqlRepository implements BoardRepositoryPort {
@@ -24,7 +37,12 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   load(boardId: string): Observable<BoardModel> {
     return this.apollo
       .query<{
-        board: { id: string; version: number; widgets: GqlWidgetPayload[] } | null;
+        board: {
+          id: string;
+          title: string;
+          version: number;
+          widgets: GqlWidgetPayload[];
+        } | null;
       }>({
         query: GET_BOARD,
         variables: { id: boardId },
@@ -35,12 +53,104 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
           const board = data?.board;
           return {
             id: board?.id ?? boardId,
+            title: board?.title ?? boardId,
             version: board?.version ?? 1,
             widgets: board?.widgets?.map(payloadToWidget) ?? [],
           };
         }),
         catchError((err) => {
           const message = extractGraphqlMessage(err) ?? "GraphQL load failed";
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  listDataSourceDefinitions(): Observable<DataSourceDefinitionModel[]> {
+    return this.apollo
+      .query<{
+        dataSourceDefinitions: Array<{
+          id: string;
+          code: string;
+          version: number;
+          protocol: string;
+          operationName: string;
+          request: string;
+          variablesSchemaJson: string;
+          resultSchemaJson: string;
+        }>;
+      }>({
+        query: GET_DATA_SOURCE_DEFINITIONS,
+        fetchPolicy: "network-only",
+      })
+      .pipe(
+        map(({ data }) =>
+          (data?.dataSourceDefinitions ?? []).map((item) => ({
+            id: item.id,
+            code: item.code,
+            version: item.version,
+            protocol: item.protocol,
+            operationName: item.operationName,
+            request: item.request,
+            variablesSchema: parseJsonObject(item.variablesSchemaJson),
+            resultSchema: parseJsonObject(item.resultSchemaJson),
+          }))
+        ),
+        catchError((err) => {
+          const message =
+            extractGraphqlMessage(err) ?? "Data source definitions load failed";
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  listAccessibleOverlays(userHuid: string): Observable<OverlaySummary[]> {
+    return this.apollo
+      .query<{
+        accessibleOverlays: Array<{
+          huid: string;
+          name: string;
+        }>;
+      }>({
+        query: GET_ACCESSIBLE_OVERLAYS,
+        variables: { userHuid },
+        fetchPolicy: "network-only",
+      })
+      .pipe(
+        map(({ data }) =>
+          (data?.accessibleOverlays ?? []).map((item) => ({
+            huid: item.huid,
+            name: item.name,
+          }))
+        ),
+        catchError((err) => {
+          const message =
+            extractGraphqlMessage(err) ?? "Accessible overlays load failed";
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  listOverlayUnits(overlayHuid: string): Observable<UnitSummary[]> {
+    return this.apollo
+      .query<{
+        overlayUnits: Array<{
+          huid: string;
+          name: string;
+        }>;
+      }>({
+        query: GET_OVERLAY_UNITS,
+        variables: { overlayHuid },
+        fetchPolicy: "network-only",
+      })
+      .pipe(
+        map(({ data }) =>
+          (data?.overlayUnits ?? []).map((item) => ({
+            huid: item.huid,
+            name: item.name,
+          }))
+        ),
+        catchError((err) => {
+          const message = extractGraphqlMessage(err) ?? "Overlay units load failed";
           return throwError(() => new Error(message));
         })
       );
@@ -59,7 +169,19 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
         },
       })
       .pipe(
-        map(({ data }) => data?.saveBoard?.version ?? board.version + 1),
+        map(({ data }) => {
+          const serverVersion = data?.saveBoard?.version;
+          if (typeof serverVersion === "number" && Number.isFinite(serverVersion)) {
+            return serverVersion;
+          }
+          // Degraded mode: keep board usable even when backend payload is partial.
+          const fallbackVersion = board.version + 1;
+          console.warn(
+            "[whiteboard] saveBoard returned empty payload, using degraded optimistic fallback version",
+            { boardId: board.id, localVersion: board.version, fallbackVersion }
+          );
+          return fallbackVersion;
+        }),
         catchError((err) => {
           const msg = extractGraphqlMessage(err) ?? "";
           if (isVersionConflictError(err, msg)) {
@@ -67,13 +189,67 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
               () => new VersionConflictError(msg || "Version conflict")
             );
           }
-          return throwError(() => err);
+          const message = msg || "GraphQL save failed";
+          return throwError(() => new Error(message));
+        })
+      );
+  }
+
+  fetchWidgetSnapshot(
+    boardId: string,
+    widgetId: string
+  ): Observable<WidgetSnapshotResult> {
+    return this.apollo
+      .mutate<{
+        fetchWidgetSnapshot: {
+          widgetId: string;
+          dataSourceCode: string;
+          normalizedValueJson: string;
+          updatedAt: string;
+        } | null;
+      }>({
+        mutation: FETCH_WIDGET_SNAPSHOT,
+        variables: { boardId, widgetId },
+      })
+      .pipe(
+        map(({ data }) => {
+          const payload = data?.fetchWidgetSnapshot;
+          if (!payload) {
+            throw new Error("Snapshot fetch returned empty payload");
+          }
+          return {
+            widgetId: payload.widgetId,
+            dataSourceCode: payload.dataSourceCode,
+            snapshot: parseCapaOpsDoughnutSnapshot(payload.normalizedValueJson),
+            updatedAt: payload.updatedAt,
+          };
+        }),
+        catchError((err) => {
+          const message = extractGraphqlMessage(err) ?? "Snapshot fetch failed";
+          return throwError(() => new Error(message));
         })
       );
   }
 
   subscribe(boardId: string): Observable<BoardModel> {
-    return createBoardSubscriptionStream(toWebSocketUrl(this.graphqlUrl), boardId);
+    return createBoardSubscriptionStream(
+      toWebSocketUrl(this.graphqlUrl),
+      boardId,
+      () => ({})
+    );
+  }
+}
+
+function parseJsonObject(raw: string): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+    return {};
+  } catch {
+    return {};
   }
 }
 

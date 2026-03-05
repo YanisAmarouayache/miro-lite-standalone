@@ -1,7 +1,20 @@
+import { CapaOpsDoughnutSnapshot } from "./capaops.model";
+
 export type WidgetType = 'chart' | 'table' | 'counter' | 'text' | 'image' | 'textarea';
+
+export interface WidgetDataBindingConfig {
+  dataSourceCode: string;
+  overlayHuid?: string;
+  unitHuid?: string;
+  variablesMapping?: Record<string, unknown>;
+  fieldMapping?: Record<string, unknown>;
+  displayRules?: Record<string, unknown>;
+}
 
 export interface ChartWidgetConfig {
   chartType: string;
+  bindings?: WidgetDataBindingConfig[];
+  snapshot?: CapaOpsDoughnutSnapshot;
 }
 
 export interface TableWidgetConfig {
@@ -54,6 +67,7 @@ export type WidgetModel =
 
 export interface BoardModel {
   id: string;
+  title: string;
   version: number;
   widgets: WidgetModel[];
 }
@@ -69,7 +83,7 @@ const WIDGET_CONFIG_DEFAULTS = {
 
 export function getDefaultWidgetConfig(type: WidgetType): WidgetConfig {
   const config = WIDGET_CONFIG_DEFAULTS[type];
-  return { ...config };
+  return cloneWidgetConfig(config);
 }
 
 export function normalizeWidgetConfig(
@@ -80,17 +94,72 @@ export function normalizeWidgetConfig(
   switch (type) {
     case "chart": {
       const defaults = getDefaultWidgetConfig("chart") as ChartWidgetConfig;
+      const rawBindings = Array.isArray(input["bindings"]) ? input["bindings"] : [];
+      const bindings = rawBindings
+        .filter((item): item is Record<string, unknown> => !!item && typeof item === "object" && !Array.isArray(item))
+        .map((rawBinding) => {
+          const dataSourceCode =
+            typeof rawBinding["dataSourceCode"] === "string"
+              ? rawBinding["dataSourceCode"].trim()
+              : "";
+          const variablesMapping =
+            rawBinding["variablesMapping"] &&
+            typeof rawBinding["variablesMapping"] === "object" &&
+            !Array.isArray(rawBinding["variablesMapping"])
+              ? cloneRecord(rawBinding["variablesMapping"] as Record<string, unknown>)
+              : undefined;
+          const unitHuid =
+            typeof rawBinding["unitHuid"] === "string"
+              ? rawBinding["unitHuid"].trim()
+              : typeof variablesMapping?.["unitHuid"] === "string"
+                ? String(variablesMapping["unitHuid"]).trim()
+                : "";
+          const overlayHuid =
+            typeof rawBinding["overlayHuid"] === "string"
+              ? rawBinding["overlayHuid"].trim()
+              : typeof variablesMapping?.["overlayHuid"] === "string"
+                ? String(variablesMapping["overlayHuid"]).trim()
+                : "";
+          const fieldMapping =
+            rawBinding["fieldMapping"] &&
+            typeof rawBinding["fieldMapping"] === "object" &&
+            !Array.isArray(rawBinding["fieldMapping"])
+              ? cloneRecord(rawBinding["fieldMapping"] as Record<string, unknown>)
+              : undefined;
+          const displayRules =
+            rawBinding["displayRules"] &&
+            typeof rawBinding["displayRules"] === "object" &&
+            !Array.isArray(rawBinding["displayRules"])
+              ? cloneRecord(rawBinding["displayRules"] as Record<string, unknown>)
+              : undefined;
+          return {
+            dataSourceCode,
+            overlayHuid,
+            unitHuid,
+            variablesMapping,
+            fieldMapping,
+            displayRules,
+          };
+        })
+        .filter((binding) => !!binding.dataSourceCode || !!binding.overlayHuid || !!binding.unitHuid);
+      const rawSnapshot = input["snapshot"];
+      const snapshot = isCapaOpsDoughnutSnapshot(rawSnapshot)
+        ? cloneSnapshot(rawSnapshot)
+        : undefined;
+
       return {
         chartType:
           typeof input["chartType"] === "string"
             ? input["chartType"]
             : defaults.chartType,
+        bindings: bindings.length > 0 ? cloneBindings(bindings) : undefined,
+        snapshot,
       };
     }
     case "table": {
       const defaults = getDefaultWidgetConfig("table") as TableWidgetConfig;
       return {
-        rows: Array.isArray(input["rows"]) ? input["rows"] : defaults.rows,
+        rows: cloneRows(Array.isArray(input["rows"]) ? input["rows"] : defaults.rows),
       };
     }
     case "counter": {
@@ -123,5 +192,118 @@ export function normalizeWidgetConfig(
 }
 
 export function widgetConfigRecord(config: WidgetConfig): Record<string, unknown> {
+  if ("chartType" in config) {
+    const chart = config as ChartWidgetConfig;
+    return {
+      chartType: chart.chartType,
+      bindings: chart.bindings ? cloneBindings(chart.bindings) : undefined,
+      snapshot: chart.snapshot ? cloneSnapshot(chart.snapshot) : undefined,
+    };
+  }
+  if ("rows" in config) {
+    const table = config as TableWidgetConfig;
+    return { rows: cloneRows(table.rows) };
+  }
   return { ...config };
+}
+
+function cloneWidgetConfig(config: WidgetConfig): WidgetConfig {
+  if ("chartType" in config) {
+    const chart = config as ChartWidgetConfig;
+    return {
+      chartType: chart.chartType,
+      bindings: chart.bindings ? cloneBindings(chart.bindings) : undefined,
+      snapshot: chart.snapshot ? cloneSnapshot(chart.snapshot) : undefined,
+    };
+  }
+  if ("rows" in config) {
+    const table = config as TableWidgetConfig;
+    return { rows: cloneRows(table.rows) };
+  }
+  return { ...config };
+}
+
+function cloneBindings(
+  bindings: WidgetDataBindingConfig[]
+): WidgetDataBindingConfig[] {
+  return bindings.map((binding) => ({
+    dataSourceCode: binding.dataSourceCode,
+    overlayHuid: binding.overlayHuid,
+    unitHuid: binding.unitHuid,
+    variablesMapping: binding.variablesMapping
+      ? cloneRecord(binding.variablesMapping)
+      : undefined,
+    fieldMapping: binding.fieldMapping ? cloneRecord(binding.fieldMapping) : undefined,
+    displayRules: binding.displayRules ? cloneRecord(binding.displayRules) : undefined,
+  }));
+}
+
+function cloneRows(rows: unknown[]): unknown[] {
+  return rows.map((row) => cloneUnknown(row));
+}
+
+function cloneSnapshot(snapshot: CapaOpsDoughnutSnapshot): CapaOpsDoughnutSnapshot {
+  return {
+    quarters: snapshot.quarters.map((quarter) => ({
+      key: quarter.key,
+      value: quarter.value,
+    })),
+    center: {
+      operationalStatusCode: snapshot.center.operationalStatusCode ?? null,
+    },
+  };
+}
+
+function cloneRecord(record: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(record).map(([key, value]) => [key, cloneUnknown(value)])
+  );
+}
+
+function cloneUnknown<T>(value: T): T {
+  if (!value || typeof value !== "object") {
+    return value;
+  }
+  if (typeof structuredClone === "function") {
+    return structuredClone(value);
+  }
+  try {
+    return JSON.parse(JSON.stringify(value)) as T;
+  } catch {
+    return value;
+  }
+}
+
+function isCapaOpsDoughnutSnapshot(value: unknown): value is CapaOpsDoughnutSnapshot {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+  const raw = value as Record<string, unknown>;
+  if (!Array.isArray(raw["quarters"])) {
+    return false;
+  }
+  const quartersValid = raw["quarters"].every((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return false;
+    }
+    const quarter = item as Record<string, unknown>;
+    return (
+      typeof quarter["key"] === "string" &&
+      typeof quarter["value"] === "number" &&
+      Number.isFinite(quarter["value"])
+    );
+  });
+  if (!quartersValid) {
+    return false;
+  }
+  const center = raw["center"];
+  if (!center || typeof center !== "object" || Array.isArray(center)) {
+    return false;
+  }
+  const status = (center as Record<string, unknown>)["operationalStatusCode"];
+  return (
+    status === undefined ||
+    status === null ||
+    typeof status === "string"
+  );
 }
