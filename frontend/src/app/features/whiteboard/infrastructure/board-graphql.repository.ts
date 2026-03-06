@@ -25,17 +25,21 @@ import {
   createBoardSubscriptionStream,
   toWebSocketUrl,
 } from "./board-graphql.subscription";
-import { WHITEBOARD_GRAPHQL_URL } from "../whiteboard.providers";
+import {
+  WHITEBOARD_APOLLO_CLIENT,
+  WHITEBOARD_GRAPHQL_URL,
+} from "../whiteboard.providers";
 import { DataSourceDefinitionModel } from "../domain/datasource-definition.model";
 import { OverlaySummary, UnitSummary } from "../domain/overlay-summary.model";
 
 @Injectable()
 export class BoardGraphqlRepository implements BoardRepositoryPort {
   private readonly apollo = inject(Apollo);
+  private readonly whiteboardApollo = this.apollo.use(WHITEBOARD_APOLLO_CLIENT);
   private readonly graphqlUrl = inject(WHITEBOARD_GRAPHQL_URL);
 
   load(boardId: string): Observable<BoardModel> {
-    return this.apollo
+    return this.whiteboardApollo
       .query<{
         board: {
           id: string;
@@ -66,7 +70,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   }
 
   listDataSourceDefinitions(): Observable<DataSourceDefinitionModel[]> {
-    return this.apollo
+    return this.whiteboardApollo
       .query<{
         dataSourceDefinitions: Array<{
           id: string;
@@ -104,7 +108,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   }
 
   listAccessibleOverlays(userHuid: string): Observable<OverlaySummary[]> {
-    return this.apollo
+    return this.whiteboardApollo
       .query<{
         accessibleOverlays: Array<{
           huid: string;
@@ -131,7 +135,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   }
 
   listOverlayUnits(overlayHuid: string): Observable<UnitSummary[]> {
-    return this.apollo
+    return this.whiteboardApollo
       .query<{
         overlayUnits: Array<{
           huid: string;
@@ -157,7 +161,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
   }
 
   save(board: BoardModel): Observable<number> {
-    return this.apollo
+    return this.whiteboardApollo
       .mutate<{
         saveBoard: { id: string; version: number } | null;
       }>({
@@ -199,7 +203,7 @@ export class BoardGraphqlRepository implements BoardRepositoryPort {
     boardId: string,
     widgetId: string
   ): Observable<WidgetSnapshotResult> {
-    return this.apollo
+    return this.whiteboardApollo
       .mutate<{
         fetchWidgetSnapshot: {
           widgetId: string;

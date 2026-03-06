@@ -3,7 +3,7 @@ import {
   InjectionToken,
   makeEnvironmentProviders,
 } from "@angular/core";
-import { provideApollo } from "apollo-angular";
+import { provideNamedApollo } from "apollo-angular";
 import {
   ApolloClient,
   InMemoryCache,
@@ -18,6 +18,8 @@ export interface WhiteboardProvidersConfig {
   graphqlUrl: string;
 }
 
+export const WHITEBOARD_APOLLO_CLIENT = "whiteboard";
+
 export const WHITEBOARD_GRAPHQL_URL = new InjectionToken<string>(
   "WHITEBOARD_GRAPHQL_URL"
 );
@@ -26,13 +28,12 @@ export function provideWhiteboard(
   config: WhiteboardProvidersConfig
 ): EnvironmentProviders {
   return makeEnvironmentProviders([
-    provideApollo(
-      () =>
-        new ApolloClient({
+    provideNamedApollo(() => ({
+      [WHITEBOARD_APOLLO_CLIENT]: new ApolloClient({
           link: createHttpLink({ uri: config.graphqlUrl }),
           cache: new InMemoryCache(),
         })
-    ),
+    })),
     BoardGraphqlRepository,
     WidgetCatalogRepository,
     { provide: BOARD_REPOSITORY, useExisting: BoardGraphqlRepository },

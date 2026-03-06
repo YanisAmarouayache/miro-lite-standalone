@@ -6,7 +6,9 @@ import {
   EventEmitter,
   HostListener,
   Input,
+  OnChanges,
   Output,
+  SimpleChanges,
   ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -40,13 +42,14 @@ import {
   styleUrl: "./widget-canvas.component.scss",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WidgetCanvasComponent {
+export class WidgetCanvasComponent implements OnChanges {
   private pendingEditableDrag?: {
     widgetId: string;
     startX: number;
     startY: number;
   };
   private readonly dragThreshold = 6;
+  private readonly inlineTextDrafts = new Map<string, string>();
 
   @ViewChild("canvasRoot") private canvasRoot?: ElementRef<HTMLDivElement>;
   @Input({ required: true }) widgets: WidgetModel[] = [];
@@ -99,8 +102,41 @@ export class WidgetCanvasComponent {
     return Math.max(1400, maxY + 300);
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes["widgets"]) {
+      return;
+    }
+    const existingIDs = new Set(this.widgets.map((widget) => widget.id));
+    for (const widgetID of this.inlineTextDrafts.keys()) {
+      if (existingIDs.has(widgetID)) {
+        continue;
+      }
+      this.inlineTextDrafts.delete(widgetID);
+    }
+  }
+
   textValue(widget: WidgetModel): string {
+    const draft = this.inlineTextDrafts.get(widget.id);
+    if (draft !== undefined) {
+      return draft;
+    }
     return getWidgetText(widget);
+  }
+
+  onInlineTextChange(widgetId: string, value: string): void {
+    this.inlineTextDrafts.set(widgetId, value);
+  }
+
+  onInlineTextBlur(widget: WidgetModel): void {
+    const widgetID = widget.id;
+    const draft = this.inlineTextDrafts.get(widgetID);
+    if (draft === undefined) {
+      return;
+    }
+    const current = getWidgetText(widget);
+    if (draft !== current) {
+      this.updateText.emit({ widgetId: widgetID, text: draft });
+    }
   }
 
   chartType(widget: WidgetModel): string {

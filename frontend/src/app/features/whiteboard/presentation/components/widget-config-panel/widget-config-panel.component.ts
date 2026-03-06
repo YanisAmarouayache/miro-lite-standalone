@@ -58,6 +58,7 @@ export class WidgetConfigPanelComponent implements OnChanges {
   @Output() command = new EventEmitter<WidgetConfigCommand>();
   private lastWidgetID = '';
   private lastEmittedText = '';
+  private textDirty = false;
   textDraft = '';
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -68,6 +69,10 @@ export class WidgetConfigPanelComponent implements OnChanges {
       this.lastWidgetID = this.vm.widgetId;
       this.lastEmittedText = this.vm.textValue;
       this.textDraft = this.vm.textValue;
+      this.textDirty = false;
+      return;
+    }
+    if (this.textDirty) {
       return;
     }
     if (this.vm.textValue !== this.lastEmittedText) {
@@ -87,6 +92,7 @@ export class WidgetConfigPanelComponent implements OnChanges {
 
   onTextDraftChange(value: string): void {
     this.textDraft = value;
+    this.textDirty = true;
   }
 
   onTextBlur(): void {
@@ -98,9 +104,11 @@ export class WidgetConfigPanelComponent implements OnChanges {
       return;
     }
     if (value === this.lastEmittedText) {
+      this.textDirty = false;
       return;
     }
     this.lastEmittedText = value;
+    this.textDirty = false;
     this.command.emit({ type: 'update_text', text: value });
   }
 }
