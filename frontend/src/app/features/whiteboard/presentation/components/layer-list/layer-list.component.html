@@ -16,7 +16,7 @@
     (click)="selectWidget.emit(widget.id)"
     (contextmenu)="onContextMenu(widget.id, $event)"
   >
-    <span>{{ widgetName(widget.type) }} · {{ shortId(widget.id) }}</span>
+    <span>{{ widgetName(widget) }} · {{ shortId(widget.id) }}</span>
     <span>L{{ layerNumber(widget.id) }}</span>
   </button>
 </div>

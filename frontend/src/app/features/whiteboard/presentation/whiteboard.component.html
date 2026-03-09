@@ -91,8 +91,8 @@
                 *ngFor="let definition of group.widgets"
                 [disabled]="!viewModel.editable"
                 draggable="true"
-                (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
-                (click)="ui.addWidget(definition.type, viewModel.editable)"
+                (dragstart)="ui.onWidgetButtonDragStart(definition.id, $event, viewModel.editable)"
+                (click)="ui.addWidget(definition.id, viewModel.editable)"
               >
                 <div class="item-content-left">
                   <div class="item-main-icon-wrapper">

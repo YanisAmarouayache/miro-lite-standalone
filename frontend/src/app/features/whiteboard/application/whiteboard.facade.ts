@@ -113,18 +113,22 @@ export class WhiteboardFacade {
     this.patch(this.widgetCommands.setWidgetFrame(board, id, x, y, width, height));
   }
 
-  addWidget(type: string): void {
-    const definition = this.widgetCatalog.get(type);
-    if (!definition) return;
+  addWidget(widgetCatalogId: string): string | null {
+    const definition = this.widgetCatalog.get(widgetCatalogId);
+    if (!definition) return null;
     const board = this.boardSubject.value;
-    this.patch(this.widgetCommands.addWidget(board, definition));
+    const nextBoard = this.widgetCommands.addWidget(board, definition);
+    this.patch(nextBoard);
+    return nextBoard.widgets[nextBoard.widgets.length - 1]?.id ?? null;
   }
 
-  addWidgetAt(type: string, x: number, y: number): void {
-    const definition = this.widgetCatalog.get(type);
-    if (!definition) return;
+  addWidgetAt(widgetCatalogId: string, x: number, y: number): string | null {
+    const definition = this.widgetCatalog.get(widgetCatalogId);
+    if (!definition) return null;
     const board = this.boardSubject.value;
-    this.patch(this.widgetCommands.addWidgetAt(board, definition, x, y));
+    const nextBoard = this.widgetCommands.addWidgetAt(board, definition, x, y);
+    this.patch(nextBoard);
+    return nextBoard.widgets[nextBoard.widgets.length - 1]?.id ?? null;
   }
 
   updateConfig(id: string, partialConfig: Record<string, unknown>): void {

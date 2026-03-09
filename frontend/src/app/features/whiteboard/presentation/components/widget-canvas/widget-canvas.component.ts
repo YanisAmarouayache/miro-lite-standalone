@@ -179,7 +179,9 @@ export class WidgetCanvasComponent implements OnChanges {
   requestDrag(widgetId: string, event: MouseEvent): void {
     if (!this.editable) return;
     if (event.button !== 0) return;
-    if (!this.isSelected(widgetId)) return;
+    if (!this.isSelected(widgetId)) {
+      this.selectWidget.emit(widgetId);
+    }
     const target = event.target as HTMLElement | null;
     if (target?.closest(".resize-handle")) return;
     if (
@@ -194,7 +196,9 @@ export class WidgetCanvasComponent implements OnChanges {
   onEditableMouseDown(widgetId: string, event: MouseEvent): void {
     if (!this.editable) return;
     if (event.button !== 0) return;
-    if (!this.isSelected(widgetId)) return;
+    if (!this.isSelected(widgetId)) {
+      this.selectWidget.emit(widgetId);
+    }
     this.pendingEditableDrag = {
       widgetId,
       startX: event.clientX,

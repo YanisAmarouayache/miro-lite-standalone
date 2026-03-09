@@ -15,6 +15,7 @@ import {
   getCounterValue,
   getWidgetText,
 } from '../domain/widget-selectors';
+import { isChartWidget } from '../domain/widget-selectors';
 import {
   LayerListComponent,
 } from './components/layer-list/layer-list.component';
@@ -279,25 +280,35 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
 
   private buildWidgetGroups(widgets: WidgetDefinition[]): Array<{ id: string; title: string; widgets: WidgetDefinition[] }> {
     const groups: Record<string, WidgetDefinition[]> = {
-      data: [],
-      content: [],
-      media: [],
+      text: [],
+      chart: [],
+      table: [],
+      image: [],
     };
 
     widgets.forEach((widget) => {
-      if (widget.type === 'chart' || widget.type === 'table' || widget.type === 'counter') {
-        groups['data'].push(widget);
-      } else if (widget.type === 'text' || widget.type === 'textarea') {
-        groups['content'].push(widget);
-      } else {
-        groups['media'].push(widget);
+      if (widget.type === 'text' || widget.type === 'textarea') {
+        groups['text'].push(widget);
+        return;
+      }
+      if (widget.type === 'chart') {
+        groups['chart'].push(widget);
+        return;
+      }
+      if (widget.type === 'table') {
+        groups['table'].push(widget);
+        return;
+      }
+      if (widget.type === 'image') {
+        groups['image'].push(widget);
       }
     });
 
     return [
-      { id: 'data', title: 'Data', widgets: groups['data'] },
-      { id: 'content', title: 'Content', widgets: groups['content'] },
-      { id: 'media', title: 'Media', widgets: groups['media'] },
+      { id: 'text', title: 'Text', widgets: groups['text'] },
+      { id: 'chart', title: 'Chart', widgets: groups['chart'] },
+      { id: 'table', title: 'Table', widgets: groups['table'] },
+      { id: 'image', title: 'Image', widgets: groups['image'] },
     ].filter((group) => group.widgets.length > 0);
   }
 
@@ -317,7 +328,7 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     return {
       widgetId: selectedWidget.id,
       widgetType: selectedWidget.type,
-      widgetName: this.widgetName(selectedWidget.type),
+      widgetName: this.widgetDisplayName(selectedWidget),
       layerPosition: this.selectedLayerPosition(widgets, selectedWidget.id),
       widgetCount: widgets.length,
       chartTypes: this.chartTypes,
@@ -345,6 +356,17 @@ export class WhiteboardComponent implements OnChanges, OnDestroy {
     const match = this.availableWidgets.find((item) => item.type === type)?.name ?? type;
     this.widgetNameByType.set(type, match);
     return match;
+  }
+
+  private widgetDisplayName(widget: WidgetModel): string {
+    if (isChartWidget(widget)) {
+      if (widget.config.chartType === "bar") return "Data bar";
+      if (widget.config.chartType === "pie") return "Pie";
+      if (widget.config.chartType === "doughnut") return "Doughnut";
+      if (widget.config.chartType === "line") return "Line";
+      return "Chart";
+    }
+    return this.widgetName(widget.type);
   }
 
 }
