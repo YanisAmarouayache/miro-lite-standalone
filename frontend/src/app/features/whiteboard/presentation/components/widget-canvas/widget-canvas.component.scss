@@ -41,6 +41,7 @@
 
 .widget {
   position: absolute;
+  isolation: isolate;
   box-sizing: border-box;
   border: 1px solid transparent;
   background: var(--whiteboard-surface);
@@ -54,6 +55,23 @@
 
 .widget-yellow-box {
   background: var(--whiteboard-yellow-box-bg);
+}
+
+.widget-transparent {
+  background: transparent;
+  padding: 0;
+}
+
+.widget-transparent.widget-selected {
+  border-color: var(--whiteboard-accent);
+  box-shadow: 0 0 0 2px var(--whiteboard-accent-soft);
+}
+
+.widget-transparent .drag-surface {
+  top: 0;
+  left: 10px;
+  right: 10px;
+  border-top-style: solid;
 }
 
 .widget-selected {

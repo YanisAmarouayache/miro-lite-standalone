@@ -17,7 +17,8 @@ export function toWebSocketUrl(httpUrl: string): string {
 
 export function createBoardSubscriptionStream(
   wsUrl: string,
-  boardId: string
+  boardId: string,
+  connectionInitPayload: () => Record<string, unknown>
 ): Observable<BoardModel> {
   return new Observable<BoardModel>((observer) => {
     let socket: WebSocket | null = null;
@@ -105,7 +106,10 @@ export function createBoardSubscriptionStream(
         reconnectAttempt = 0;
         waitingForOnline = false;
         currentSocket.send(
-          JSON.stringify({ type: "connection_init", payload: {} })
+          JSON.stringify({
+            type: "connection_init",
+            payload: connectionInitPayload(),
+          })
         );
       };
 
@@ -129,6 +133,13 @@ export function createBoardSubscriptionStream(
           return;
         }
 
+        if (payload.type === "connection_error") {
+          disposed = true;
+          teardownSocket();
+          observer.error(new Error("WebSocket connection init failed"));
+          return;
+        }
+
         if (payload.type === "ping") {
           currentSocket.send(JSON.stringify({ type: "pong" }));
           return;
@@ -139,6 +150,7 @@ export function createBoardSubscriptionStream(
           if (!board) return;
           observer.next({
             id: board.id ?? boardId,
+            title: board.title ?? boardId,
             version: board.version ?? 1,
             widgets: board.widgets?.map(payloadToWidget) ?? [],
           });
@@ -151,7 +163,9 @@ export function createBoardSubscriptionStream(
         }
 
         if (payload.type === "complete" && payload.id === operationId) {
-          requestReconnect();
+          disposed = true;
+          teardownSocket();
+          observer.complete();
         }
       };
 

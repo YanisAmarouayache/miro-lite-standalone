@@ -46,12 +46,18 @@ export class WhiteboardUiService {
     const safeZoom = zoom || 1;
     const x = (canvas.scrollLeft + event.clientX - rect.left) / safeZoom;
     const y = (canvas.scrollTop + event.clientY - rect.top) / safeZoom;
-    this.facade.addWidgetAt(event.widgetType, x, y);
+    const createdWidgetId = this.facade.addWidgetAt(event.widgetType, x, y);
+    if (createdWidgetId) {
+      this.selectWidget(createdWidgetId);
+    }
   }
 
   addWidget(type: string, editable: boolean): void {
     if (!editable) return;
-    this.facade.addWidget(type);
+    const createdWidgetId = this.facade.addWidget(type);
+    if (createdWidgetId) {
+      this.selectWidget(createdWidgetId);
+    }
   }
 
   selectWidget(widgetId: string): void {
@@ -122,6 +128,26 @@ export class WhiteboardUiService {
     this.facade.updateChartType(widgetId, chartType);
   }
 
+  updateChartDataSource(widgetId: string, dataSourceCode: string, editable: boolean): void {
+    if (!editable) return;
+    this.facade.updateChartDataSource(widgetId, dataSourceCode);
+  }
+
+  updateChartUnitHuid(widgetId: string, unitHuid: string, editable: boolean): void {
+    if (!editable) return;
+    this.facade.updateChartUnitHuid(widgetId, unitHuid);
+  }
+
+  updateChartOverlayHuid(widgetId: string, overlayHuid: string, editable: boolean): void {
+    if (!editable) return;
+    this.facade.updateChartOverlayHuid(widgetId, overlayHuid);
+  }
+
+  fetchWidgetSnapshot(widgetId: string, editable: boolean): void {
+    if (!editable) return;
+    this.facade.fetchWidgetSnapshot(widgetId);
+  }
+
   updateCounterValue(widgetId: string, value: string, editable: boolean): void {
     if (!editable) return;
     this.facade.updateCounterValue(widgetId, value);
@@ -148,6 +174,7 @@ export class WhiteboardUiService {
     widgets: WidgetModel[],
     editable: boolean
   ): void {
+    this.interaction.setSelectedWidgetId(event.widgetId);
     const widget = widgets.find((item) => item.id === event.widgetId);
     if (!widget) return;
     this.startDrag(widget, event.event, editable);
@@ -176,6 +203,7 @@ export class WhiteboardUiService {
   onPointerUp(): void {
     const commit = this.interaction.onPointerUp();
     if (!commit) return;
+    this.interaction.setSelectedWidgetId(commit.widgetId);
     this.facade.setWidgetFrame(
       commit.widgetId,
       commit.frame.x,

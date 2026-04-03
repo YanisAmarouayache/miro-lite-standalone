@@ -68,8 +68,16 @@ export class LayerListComponent implements OnChanges {
     return this.layerNumberById.get(widgetId) ?? 0;
   }
 
-  widgetName(type: string): string {
-    return this.widgetNameByType.get(type) ?? type;
+  widgetName(widget: WidgetModel): string {
+    if (widget.type === "chart") {
+      const chartType = widget.config.chartType;
+      if (chartType === "bar") return "Data bar";
+      if (chartType === "pie") return "Pie";
+      if (chartType === "doughnut") return "Doughnut";
+      if (chartType === "line") return "Line";
+      return "Chart";
+    }
+    return this.widgetNameByType.get(widget.type) ?? widget.type;
   }
 
   onContextMenu(widgetId: string, event: MouseEvent): void {

@@ -6,11 +6,24 @@ import {
   EventEmitter,
   HostListener,
   Input,
+  OnChanges,
   Output,
+  SimpleChanges,
   ViewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { CapaOpsDoughnutSnapshot } from "../../../domain/capaops.model";
 import { WidgetModel } from "../../../domain/board.model";
+import {
+  getChartType,
+  getCounterLabel,
+  getCounterValue,
+  getImageAlt,
+  getImageSrc,
+  getWidgetText,
+  isChartWidget,
+} from "../../../domain/widget-selectors";
+import { CapaopsDoughnutComponent } from "../capaops-doughnut/capaops-doughnut.component";
 import {
   ResizeDirection,
   WidgetDropEvent,
@@ -24,21 +37,24 @@ import {
 @Component({
   selector: "app-widget-canvas",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CapaopsDoughnutComponent],
   templateUrl: "./widget-canvas.component.html",
   styleUrl: "./widget-canvas.component.scss",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WidgetCanvasComponent {
+export class WidgetCanvasComponent implements OnChanges {
   private pendingEditableDrag?: {
     widgetId: string;
     startX: number;
     startY: number;
   };
   private readonly dragThreshold = 6;
+  private readonly inlineTextDrafts = new Map<string, string>();
 
   @ViewChild("canvasRoot") private canvasRoot?: ElementRef<HTMLDivElement>;
   @Input({ required: true }) widgets: WidgetModel[] = [];
+  @Input() chartSnapshots: ReadonlyMap<string, CapaOpsDoughnutSnapshot> =
+    new Map();
   @Input({ required: true }) frameOverrides: ReadonlyMap<string, WidgetFrame> =
     new Map();
   @Input() selectedWidgetId: string | null = null;
@@ -86,46 +102,73 @@ export class WidgetCanvasComponent {
     return Math.max(1400, maxY + 300);
   }
 
-  textValue(widget: WidgetModel): string {
-    if (widget.type === "text" || widget.type === "textarea") {
-      return widget.config.text;
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes["widgets"]) {
+      return;
     }
-    return "";
+    const existingIDs = new Set(this.widgets.map((widget) => widget.id));
+    for (const widgetID of this.inlineTextDrafts.keys()) {
+      if (existingIDs.has(widgetID)) {
+        continue;
+      }
+      this.inlineTextDrafts.delete(widgetID);
+    }
+  }
+
+  textValue(widget: WidgetModel): string {
+    const draft = this.inlineTextDrafts.get(widget.id);
+    if (draft !== undefined) {
+      return draft;
+    }
+    return getWidgetText(widget);
+  }
+
+  onInlineTextChange(widgetId: string, value: string): void {
+    this.inlineTextDrafts.set(widgetId, value);
+  }
+
+  onInlineTextBlur(widget: WidgetModel): void {
+    const widgetID = widget.id;
+    const draft = this.inlineTextDrafts.get(widgetID);
+    if (draft === undefined) {
+      return;
+    }
+    const current = getWidgetText(widget);
+    if (draft !== current) {
+      this.updateText.emit({ widgetId: widgetID, text: draft });
+    }
   }
 
   chartType(widget: WidgetModel): string {
-    if (widget.type === "chart") {
-      return widget.config.chartType;
-    }
-    return "pie";
+    return getChartType(widget);
+  }
+
+  isDoughnut(widget: WidgetModel): boolean {
+    return isChartWidget(widget) && this.chartType(widget) === "doughnut";
+  }
+
+  hasDoughnutData(widget: WidgetModel): boolean {
+    return this.isDoughnut(widget) && this.chartSnapshots.has(widget.id);
+  }
+
+  doughnutData(widget: WidgetModel): CapaOpsDoughnutSnapshot | null {
+    return this.chartSnapshots.get(widget.id) ?? null;
   }
 
   imageSrc(widget: WidgetModel): string {
-    if (widget.type === "image") {
-      return widget.config.src;
-    }
-    return "";
+    return getImageSrc(widget);
   }
 
   imageAlt(widget: WidgetModel): string {
-    if (widget.type === "image") {
-      return widget.config.alt;
-    }
-    return "Imported image";
+    return getImageAlt(widget);
   }
 
   counterValue(widget: WidgetModel): number {
-    if (widget.type === "counter") {
-      return widget.config.value;
-    }
-    return 0;
+    return getCounterValue(widget);
   }
 
   counterLabel(widget: WidgetModel): string {
-    if (widget.type === "counter") {
-      return widget.config.label;
-    }
-    return "Metric";
+    return getCounterLabel(widget);
   }
 
   onWidgetContextMenu(widgetId: string, event: MouseEvent): void {
@@ -136,7 +179,9 @@ export class WidgetCanvasComponent {
   requestDrag(widgetId: string, event: MouseEvent): void {
     if (!this.editable) return;
     if (event.button !== 0) return;
-    if (!this.isSelected(widgetId)) return;
+    if (!this.isSelected(widgetId)) {
+      this.selectWidget.emit(widgetId);
+    }
     const target = event.target as HTMLElement | null;
     if (target?.closest(".resize-handle")) return;
     if (
@@ -151,7 +196,9 @@ export class WidgetCanvasComponent {
   onEditableMouseDown(widgetId: string, event: MouseEvent): void {
     if (!this.editable) return;
     if (event.button !== 0) return;
-    if (!this.isSelected(widgetId)) return;
+    if (!this.isSelected(widgetId)) {
+      this.selectWidget.emit(widgetId);
+    }
     this.pendingEditableDrag = {
       widgetId,
       startX: event.clientX,

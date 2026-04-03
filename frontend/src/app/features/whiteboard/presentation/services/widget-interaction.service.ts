@@ -3,6 +3,8 @@ import { BehaviorSubject } from 'rxjs';
 import { WidgetModel } from '../../domain/board.model';
 import { ResizeDirection, WidgetFrame } from '../models/widget-interaction.model';
 
+const MIN_WIDGET_SIZE = 36;
+
 interface InteractionState {
   widgetId: string;
   mode: 'drag' | 'resize';
@@ -100,17 +102,17 @@ export class WidgetInteractionService {
     let nextHeight = startFrame.height;
 
     if (direction.includes('e')) {
-      nextWidth = Math.max(0, startFrame.width + dx);
+      nextWidth = Math.max(MIN_WIDGET_SIZE, startFrame.width + dx);
     }
     if (direction.includes('s')) {
-      nextHeight = Math.max(0, startFrame.height + dy);
+      nextHeight = Math.max(MIN_WIDGET_SIZE, startFrame.height + dy);
     }
     if (direction.includes('w')) {
-      nextWidth = Math.max(0, startFrame.width - dx);
+      nextWidth = Math.max(MIN_WIDGET_SIZE, startFrame.width - dx);
       nextX = startFrame.x + (startFrame.width - nextWidth);
     }
     if (direction.includes('n')) {
-      nextHeight = Math.max(0, startFrame.height - dy);
+      nextHeight = Math.max(MIN_WIDGET_SIZE, startFrame.height - dy);
       nextY = startFrame.y + (startFrame.height - nextHeight);
     }
 

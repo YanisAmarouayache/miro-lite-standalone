@@ -19,6 +19,7 @@
     <app-widget-canvas
       #canvasRef
       [widgets]="viewModel.board.widgets"
+      [chartSnapshots]="viewModel.chartSnapshots"
       [frameOverrides]="frameOverrides"
       [selectedWidgetId]="viewModel.selectedWidget?.id ?? null"
       [zoom]="zoom"
@@ -37,21 +38,11 @@
       (widgetDrop)="ui.onWidgetDrop($event, canvasRef.getCanvasElement(), zoom, viewModel.editable)"
     ></app-widget-canvas>
 
-    <ng-container *ngIf="viewModel.selectedWidget as selected">
+    <ng-container *ngIf="viewModel.panel as panel">
       <aside class="side-panel">
         <app-widget-config-panel
-          [selectedWidget]="selected"
-          [widgetCount]="viewModel.board.widgets.length"
-          [layerPosition]="selectedLayerPosition(viewModel.board.widgets, selected.id)"
-          [chartTypes]="chartTypes"
-          [definitions]="availableWidgets"
-          [editable]="viewModel.editable"
-          (action)="ui.onContextMenuAction({ widgetId: selected.id, action: $event }, viewModel.editable)"
-          (updateText)="ui.onWidgetTextChange({ widgetId: selected.id, text: $event }, viewModel.editable)"
-          (updateChartType)="ui.updateChartType(selected.id, $event, viewModel.editable)"
-          (updateCounterLabel)="ui.updateCounterLabel(selected.id, $event, viewModel.editable)"
-          (updateCounterValue)="ui.updateCounterValue(selected.id, $event, viewModel.editable)"
-          (imageSelected)="ui.updateImageFromFile(selected.id, $event, viewModel.editable)"
+          [vm]="panel"
+          (command)="onPanelCommand($event, panel)"
         ></app-widget-config-panel>
       </aside>
     </ng-container>
@@ -100,8 +91,8 @@
                 *ngFor="let definition of group.widgets"
                 [disabled]="!viewModel.editable"
                 draggable="true"
-                (dragstart)="ui.onWidgetButtonDragStart(definition.type, $event, viewModel.editable)"
-                (click)="ui.addWidget(definition.type, viewModel.editable)"
+                (dragstart)="ui.onWidgetButtonDragStart(definition.id, $event, viewModel.editable)"
+                (click)="ui.addWidget(definition.id, viewModel.editable)"
               >
                 <div class="item-content-left">
                   <div class="item-main-icon-wrapper">

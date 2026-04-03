@@ -1,10 +1,50 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { WidgetModel } from '../../../domain/board.model';
-import { WidgetDefinition } from '../../../domain/widget-definition.model';
+import { DataSourceDefinitionModel } from '../../../domain/datasource-definition.model';
+import { OverlaySummary, UnitSummary } from '../../../domain/overlay-summary.model';
 
 export type WidgetPanelAction = 'send_to_back' | 'send_backward' | 'bring_forward' | 'bring_to_front' | 'remove';
+export type WidgetConfigCommand =
+  | { type: 'action'; action: WidgetPanelAction }
+  | { type: 'update_text'; text: string }
+  | { type: 'update_chart_type'; chartType: string }
+  | { type: 'update_chart_data_source'; dataSourceCode: string }
+  | { type: 'update_chart_overlay_huid'; overlayHuid: string }
+  | { type: 'update_chart_unit_huid'; unitHuid: string }
+  | { type: 'fetch_snapshot' }
+  | { type: 'update_counter_label'; label: string }
+  | { type: 'update_counter_value'; value: string }
+  | { type: 'image_selected'; file: File };
+
+export interface WidgetConfigPanelVm {
+  widgetId: string;
+  widgetType: WidgetModel['type'];
+  widgetName: string;
+  layerPosition: number;
+  widgetCount: number;
+  chartTypes: string[];
+  dataSourceDefinitions: DataSourceDefinitionModel[];
+  accessibleOverlays: OverlaySummary[];
+  overlayUnits: UnitSummary[];
+  editable: boolean;
+  textValue: string;
+  chartType: string;
+  chartDataSourceCode: string;
+  chartOverlayHuid: string;
+  chartUnitHuid: string;
+  counterLabel: string;
+  counterValue: number;
+}
 
 @Component({
     selector: 'app-widget-config-panel',
@@ -13,60 +53,62 @@ export type WidgetPanelAction = 'send_to_back' | 'send_backward' | 'bring_forwar
     styleUrl: './widget-config-panel.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetConfigPanelComponent {
-  @Input() selectedWidget?: WidgetModel;
-  @Input({ required: true }) widgetCount = 0;
-  @Input({ required: true }) layerPosition = 0;
-  @Input() chartTypes: string[] = [];
-  @Input() definitions: WidgetDefinition[] = [];
-  @Input() editable = true;
+export class WidgetConfigPanelComponent implements OnChanges {
+  @Input() vm?: WidgetConfigPanelVm;
+  @Output() command = new EventEmitter<WidgetConfigCommand>();
+  private lastWidgetID = '';
+  private lastEmittedText = '';
+  private textDirty = false;
+  textDraft = '';
 
-  @Output() action = new EventEmitter<WidgetPanelAction>();
-  @Output() updateText = new EventEmitter<string>();
-  @Output() updateChartType = new EventEmitter<string>();
-  @Output() updateCounterLabel = new EventEmitter<string>();
-  @Output() updateCounterValue = new EventEmitter<string>();
-  @Output() imageSelected = new EventEmitter<File>();
-
-  widgetName(type: string): string {
-    const definition = this.definitions.find((item) => item.type === type);
-    return definition?.name ?? type;
-  }
-
-  textValue(widget: WidgetModel): string {
-    if (widget.type === "text" || widget.type === "textarea") {
-      return widget.config.text;
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['vm'] || !this.vm) {
+      return;
     }
-    return '';
-  }
-
-  chartType(widget: WidgetModel): string {
-    if (widget.type === "chart") {
-      return widget.config.chartType;
+    if (this.vm.widgetId !== this.lastWidgetID) {
+      this.lastWidgetID = this.vm.widgetId;
+      this.lastEmittedText = this.vm.textValue;
+      this.textDraft = this.vm.textValue;
+      this.textDirty = false;
+      return;
     }
-    return 'pie';
-  }
-
-  counterLabel(widget: WidgetModel): string {
-    if (widget.type === "counter") {
-      return widget.config.label;
+    if (this.textDirty) {
+      return;
     }
-    return 'Metric';
-  }
-
-  counterValue(widget: WidgetModel): number {
-    if (widget.type === "counter") {
-      return widget.config.value;
+    if (this.vm.textValue !== this.lastEmittedText) {
+      this.lastEmittedText = this.vm.textValue;
+      this.textDraft = this.vm.textValue;
     }
-    return 0;
   }
 
   onImageFileChange(event: Event): void {
-    if (!this.editable) return;
+    if (!this.vm?.editable) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    this.imageSelected.emit(file);
+    this.command.emit({ type: 'image_selected', file });
     input.value = '';
+  }
+
+  onTextDraftChange(value: string): void {
+    this.textDraft = value;
+    this.textDirty = true;
+  }
+
+  onTextBlur(): void {
+    this.emitTextIfChanged(this.textDraft);
+  }
+
+  private emitTextIfChanged(value: string): void {
+    if (!this.vm?.editable) {
+      return;
+    }
+    if (value === this.lastEmittedText) {
+      this.textDirty = false;
+      return;
+    }
+    this.lastEmittedText = value;
+    this.textDirty = false;
+    this.command.emit({ type: 'update_text', text: value });
   }
 }

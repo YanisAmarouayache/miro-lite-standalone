@@ -1,0 +1,39 @@
+<div class="doughnut-widget">
+  <div class="doughnut-visual">
+    <svg class="doughnut-svg" viewBox="0 0 100 100" aria-label="CapaOps doughnut">
+      <path
+        *ngFor="let sector of sectors()"
+        [attr.d]="sector.path"
+        [attr.fill]="sector.color"
+      ></path>
+      <line x1="50" y1="2" x2="50" y2="98" stroke="#fff" stroke-width="1.5"></line>
+      <line x1="2" y1="50" x2="98" y2="50" stroke="#fff" stroke-width="1.5"></line>
+      <text
+        *ngFor="let tag of quarterTags()"
+        class="doughnut-quarter-tag"
+        [attr.x]="tag.x"
+        [attr.y]="tag.y"
+        [attr.transform]="'rotate(' + tag.angle + ' ' + tag.x + ' ' + tag.y + ')'"
+        text-anchor="middle"
+      >
+        {{ tag.label }}
+      </text>
+      <circle cx="50" cy="50" r="26" [attr.fill]="centerStyleColor()"></circle>
+      <text class="doughnut-center-text" x="50" y="50" text-anchor="middle">
+        <ng-container *ngIf="centerTextLines().length === 1; else multiLine">
+          <tspan x="50" y="53">{{ centerTextLines()[0] }}</tspan>
+        </ng-container>
+        <ng-template #multiLine>
+          <tspan x="50" y="47">{{ centerTextLines()[0] }}</tspan>
+          <tspan x="50" y="56">{{ centerTextLines()[1] }}</tspan>
+        </ng-template>
+      </text>
+    </svg>
+  </div>
+  <div class="doughnut-metrics">
+    <p>Food: {{ quarterValue(0) }}%</p>
+    <p>Fuel: {{ quarterValue(1) }}%</p>
+    <p>Equip: {{ quarterValue(2) }}%</p>
+    <p>Ammo: {{ quarterValue(3) }}%</p>
+  </div>
+</div>

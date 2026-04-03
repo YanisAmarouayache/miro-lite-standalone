@@ -83,12 +83,13 @@ export class HostComponent {}
 ```
 
 ## Architecture
-- `domain/`: types métier
-- `application/`: façade de cas d'usage
-- `infrastructure/`: repository GraphQL
-- `presentation/`: composant standalone
+- `domain/`: modèles `Board`/`Widget`, définitions datasource, snapshots normalisés
+- `application/`: façade de cas d'usage + orchestration autosave/realtime
+- `infrastructure/`: adapter GraphQL (query/mutation/subscription + mapping)
+- `presentation/`: composants UI (canvas, config panel, widgets dédiés comme `capaops-doughnut`)
 
 ## Notes
 - Pas d'auth
-- Backend minimal: endpoint GraphQL `board/saveBoard`
+- Contrats GraphQL utilisés: `board`, `saveBoard`, `boardUpdated`, `fetchWidgetSnapshot`
+- Les widgets data-driven utilisent des data sources prédéfinies (`domain/datasource-definition.model.ts`)
 - Le composant est container-friendly (`height: 100%`): le host parent pilote la hauteur
